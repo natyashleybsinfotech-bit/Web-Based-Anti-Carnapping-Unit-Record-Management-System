@@ -1,0 +1,50 @@
+{% extends "base_admin.html" %}
+{% block title %}Edit Case{% endblock %}
+
+{% block content %}
+<div class="panel">
+    <h2>Edit Case - {{ case.reference_no }}</h2>
+
+    <form method="POST">
+        <label>Complainant Name</label>
+        <input type="text" name="complainant_name" value="{{ case.complainant_name }}" required>
+
+        <label>Complainant Email</label>
+        <input type="email" name="complainant_email" value="{{ case.complainant_email }}" required>
+
+        <label>Complainant Contact</label>
+        <input type="text" name="complainant_contact" value="{{ case.complainant_contact }}">
+
+        <label>Incident Date</label>
+        <input type="date" name="incident_date" value="{{ case.incident_date }}" required>
+
+        <label>Incident Location</label>
+        <input type="text" name="incident_location" value="{{ case.incident_location }}" required>
+
+        <label>Vehicle Details</label>
+        <input type="text" name="vehicle_details" value="{{ case.vehicle_details }}">
+
+        <label>Narrative</label>
+        <textarea name="narrative" required>{{ case.narrative }}</textarea>
+
+        <label>Status</label>
+        <select name="status" required>
+            <option value="Pending" {% if case.status == 'Pending' %}selected{% endif %}>Pending</option>
+            <option value="Ongoing" {% if case.status == 'Ongoing' %}selected{% endif %}>Ongoing</option>
+            <option value="Closed" {% if case.status == 'Closed' %}selected{% endif %}>Closed</option>
+        </select>
+
+        <label>Assigned Officer</label>
+        <select name="assigned_officer_id" required>
+            {% for officer in officers %}
+                <option value="{{ officer[0] }}" {% if officer[0] == case.assigned_officer_id %}selected{% endif %}>
+                    {{ officer[1] }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <button type="submit" class="btn">Update Case</button>
+        <a href="{{ url_for('main.queue') }}" class="btn" style="background:#999; color:white;">Back</a>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,14 @@
+Flask==3.1.0
+Flask-MySQLdb==2.0.0
+Flask-Mail==0.10.0
+python-dotenv==1.0.1
+qrcode==8.0
+Pillow==11.1.0
+reportlab==4.2.5
+bcrypt==4.2.1
+requests==2.31.0
+supabase==2.4.2
+realtime>=1.0.0
+websockets>=10.3
+tzdata==2026.2
+openpyxl>=3.1.0

@@ -1,0 +1,124 @@
+{% extends "base_admin.html" %}
+{% block title %}Cloud Synchronization{% endblock %}
+
+{% block content %}
+<style>
+    body { background-color: #f5f7fa; }
+    .page-header { background: linear-gradient(180deg, #003d7a 0%, #0052a3 100%); margin: -40px -40px 40px -40px; padding: 50px 40px; border-bottom: 5px solid #0066cc; box-shadow: 0 4px 20px rgba(0, 61, 122, 0.15); }
+    .page-header h1 { color: white; margin: 0; font-size: 26px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    .panel { background: white; padding: 30px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0, 61, 122, 0.1); border-left: 6px solid #0066cc; margin-bottom: 30px; }
+    .panel h2 { margin: 0 0 25px 0; color: #003d7a; font-size: 18px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    .status-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
+    .status-card { background: #f0f4f8; padding: 20px; border-radius: 4px; border-left: 4px solid #0066cc; }
+    .status-card.warning { border-left-color: #ffc107; }
+    .status-card.success { border-left-color: #28a745; }
+    .status-label { font-size: 12px; color: #6c757d; text-transform: uppercase; font-weight: 600; margin-bottom: 5px; }
+    .status-value { font-size: 16px; color: #003d7a; font-weight: 600; font-family: monospace; word-break: break-all; }
+    
+    .sync-button { background: linear-gradient(135deg, #0066cc 0%, #0052a3 100%); color: white; padding: 14px 30px; border: none; border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 2px 8px rgba(0, 102, 204, 0.3); transition: all 0.3s ease; }
+    .sync-button:hover { background: linear-gradient(135deg, #0052a3 0%, #003d7a 100%); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 102, 204, 0.4); }
+    
+    .info-box { background-color: #cfe2ff; border-left: 4px solid #0066cc; padding: 16px 18px; border-radius: 4px; margin-bottom: 20px; font-size: 13px; color: #084298; font-weight: 500; }
+    .info-box.warning { background-color: #fff3cd; border-left-color: #ffc107; color: #664d03; }
+    
+    .sync-history-table { width: 100%; border-collapse: collapse; }
+    .sync-history-table th { background-color: #003d7a; color: white; padding: 14px; text-align: left; font-weight: 600; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px; border-bottom: 2px solid #0066cc; }
+    .sync-history-table td { padding: 12px 14px; border-bottom: 1px solid #e7f0ff; font-size: 13px; }
+    .sync-history-table tbody tr:hover { background-color: #f0f4f8; }
+    .sync-history-table tbody tr:last-child td { border-bottom: none; }
+    
+    .no-history { text-align: center; padding: 30px; color: #6c757d; }
+    
+    .badge { display: inline-block; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+    .badge-success { background: #d1e7dd; color: #0f5132; }
+    .badge-info { background: #cfe2ff; color: #084298; }
+    .badge-warning { background: #fff3cd; color: #664d03; }
+</style>
+
+<div class="page-header">
+    <h1>☁ CLOUD SYNCHRONIZATION</h1>
+</div>
+
+<div class="panel">
+    <h2>Cloud Configuration Status</h2>
+    
+    <div class="status-grid">
+        <div class="status-card {% if cloud_status.configured %}success{% else %}warning{% endif %}">
+            <div class="status-label">Configuration Status</div>
+            <div class="status-value">
+                {% if cloud_status.configured %}
+                    <span class="badge badge-success">✓ Configured</span>
+                {% else %}
+                    <span class="badge badge-warning">⚠ Not Configured</span>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="status-card">
+            <div class="status-label">Account ID (Cloudflare)</div>
+            <div class="status-value">{{ cloud_status.account_id }}</div>
+        </div>
+        
+        <div class="status-card">
+            <div class="status-label">Database ID</div>
+            <div class="status-value">{{ cloud_status.database_id }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="panel">
+    <h2>Manual Synchronization</h2>
+    
+    <div class="info-box">
+        <strong>📤 Sync Function:</strong> Push all local database records (cases, users, activities, report exports) to the Cloudflare D1 cloud database. This ensures your cloud backup is up-to-date.
+    </div>
+    
+    <form method="POST" action="{{ url_for('main.manual_cloud_sync') }}" style="display: inline;">
+        <button type="submit" class="sync-button" onclick="return confirm('Sync all data to cloud? This will push cases, users, activities, and report exports.');">⚡ SYNC ALL DATA TO CLOUD</button>
+    </form>
+</div>
+
+<div class="panel">
+    <h2>Synchronization History</h2>
+    
+    {% if sync_history %}
+        <table class="sync-history-table">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>User</th>
+                    <th>Action</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in sync_history %}
+                <tr>
+                    <td>{{ record[0] }}</td>
+                    <td>{{ record[1] if record[1] else 'System' }}</td>
+                    <td><span class="badge badge-info">{{ record[2] }}</span></td>
+                    <td>{{ record[3] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="no-history">
+            <p>📭 No synchronization history available. Once you perform a sync, history will appear here.</p>
+        </div>
+    {% endif %}
+</div>
+
+<div class="panel info-box warning">
+    <strong>ℹ Important Information:</strong>
+    <ul style="margin: 10px 0 0 0; padding-left: 20px;">
+        <li>Cloud sync pushes data from your local database to Cloudflare D1</li>
+        <li>This is one-way synchronization (local → cloud)</li>
+        <li>Regular syncs ensure your cloud backup is current</li>
+        <li>Configure Cloudflare D1 credentials in your .env file to enable cloud sync</li>
+        <li>Check your Cloudflare dashboard for cloud database details</li>
+    </ul>
+</div>
+{% endblock %}

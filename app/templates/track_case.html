@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track Case</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            padding: 40px;
+        }
+
+        .box {
+            max-width: 700px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            margin-top: 0;
+        }
+
+        p {
+            font-size: 16px;
+        }
+
+        .status {
+            font-weight: bold;
+            color: #c99700;
+        }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h2>Case Tracking</h2>
+
+        {% if case %}
+            <p><strong>Reference No:</strong> {{ case[0] }}</p>
+            <p><strong>Complainant:</strong> {{ case[1] }}</p>
+            <p><strong>Incident Location:</strong> {{ case[2] }}</p>
+            <p><strong>Status:</strong> <span class="status">{{ case[3] }}</span></p>
+            <p><strong>Date Filed:</strong> {{ case[4] }}</p>
+        {% else %}
+            <p>No case found for this reference number.</p>
+        {% endif %}
+    </div>
+</body>
+</html>

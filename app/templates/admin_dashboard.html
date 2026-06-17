@@ -1,0 +1,178 @@
+{% extends "base_admin.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<style>
+    body { background-color: #f5f7fa; }
+    .dashboard-header { background: linear-gradient(180deg, #003d7a 0%, #0052a3 100%); margin: -40px -40px 40px -40px; padding: 50px 40px; border-bottom: 5px solid #0066cc; box-shadow: 0 4px 20px rgba(0, 61, 122, 0.15); }
+    .dashboard-header h1 { color: #ffffff; margin: 0 0 12px 0; font-size: 26px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+    .dashboard-header p { color: #e7f0ff; margin: 0; font-size: 15px; font-weight: 600; letter-spacing: 0.5px; }
+    .stat-card { color: #003d7a; padding: 30px; border-radius: 4px; text-align: center; box-shadow: 0 2px 8px rgba(0, 61, 122, 0.1); transition: all 0.3s ease; border-left: 6px solid #0066cc; border-top: none; position: relative; overflow: hidden; background: white; }
+    .stat-card::after { content: ''; position: absolute; top: 0; right: 0; width: 100px; height: 100px; background: rgba(0, 102, 204, 0.03); border-radius: 50%; }
+    .stat-card:hover { transform: translateY(-4px); box-shadow: 0 6px 16px rgba(0, 61, 122, 0.15); }
+    .stat-card.total { border-left-color: #003d7a; }
+    .stat-card.pending { border-left-color: #0066cc; }
+    .stat-card.ongoing { border-left-color: #0052a3; }
+    .stat-card.closed { border-left-color: #004a99; }
+    .stat-card.officers { border-left-color: #003d7a; }
+    .stat-card.today { border-left-color: #0066cc; }
+    .stat-card h4 { margin: 0 0 15px 0; font-size: 12px; font-weight: 900; opacity: 0.8; text-transform: uppercase; letter-spacing: 2px; color: #003d7a; }
+    .stat-card .number { font-size: 52px; font-weight: 900; margin: 15px 0; color: #0066cc; }
+    .stat-card .label { font-size: 12px; opacity: 0.75; font-weight: 600; color: #666; }
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 40px; }
+    .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 25px; margin-bottom: 40px; }
+    .panel { background: white; padding: 35px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0, 61, 122, 0.1); border-left: 6px solid #0066cc; }
+    .panel h2 { margin: 0 0 30px 0; color: #003d7a; font-size: 20px; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; }
+    .recent-cases table { width: 100%; border-collapse: collapse; }
+    .recent-cases th { background-color: #003d7a; padding: 16px; text-align: left; font-weight: 900; color: #ffffff; border-bottom: 2px solid #0066cc; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; }
+    .recent-cases td { padding: 14px 16px; border-bottom: 1px solid #e7f0ff; }
+    .recent-cases tbody tr { transition: all 0.2s ease; }
+    .recent-cases tbody tr:hover { background-color: #f0f4f8; }
+    .status-badge { display: inline-block; padding: 6px 14px; border-radius: 4px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+    .status-badge.pending { background-color: #fff3cd; color: #856404; }
+    .status-badge.ongoing { background-color: #cfe2ff; color: #084298; }
+    .status-badge.closed { background-color: #d1e7dd; color: #0f5132; }
+    .officer-list { list-style: none; padding: 0; margin: 0; }
+    .officer-list li { display: flex; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid #e7f0ff; align-items: center; }
+    .officer-list li:last-child { border-bottom: none; }
+    .officer-list li span:first-child { color: #333; font-weight: 600; }
+    .officer-list .cases-badge { background-color: #cfe2ff; color: #084298; padding: 6px 14px; border-radius: 4px; font-weight: 800; font-size: 12px; text-transform: uppercase; }
+</style>
+
+<div class="dashboard-header">
+    <h1>⚖ SYSTEM STATISTICS & CASE MANAGEMENT</h1>
+    <p>Real-time monitoring of all carnapping investigations and officer performance metrics</p>
+</div>
+
+<!-- Key Metrics -->
+<div class="card-grid">
+    <div class="stat-card total">
+        <h4>Total Cases</h4>
+        <div class="number">{{ total_cases }}</div>
+        <div class="label">All time</div>
+    </div>
+    <div class="stat-card pending">
+        <h4>Pending</h4>
+        <div class="number">{{ pending_cases }}</div>
+        <div class="label">Awaiting assignment</div>
+    </div>
+    <div class="stat-card ongoing">
+        <h4>Ongoing</h4>
+        <div class="number">{{ ongoing_cases }}</div>
+        <div class="label">In progress</div>
+    </div>
+    <div class="stat-card closed">
+        <h4>Closed</h4>
+        <div class="number">{{ closed_cases }}</div>
+        <div class="label">{{ resolution_rate }} resolved</div>
+    </div>
+    <div class="stat-card officers">
+        <h4>Officers</h4>
+        <div class="number">{{ active_officers }}/{{ total_officers }}</div>
+        <div class="label">Active</div>
+    </div>
+    <div class="stat-card today">
+        <h4>Today</h4>
+        <div class="number">{{ cases_today }}</div>
+        <div class="label">New cases</div>
+    </div>
+</div>
+
+<!-- Charts and Statistics -->
+<div class="charts-grid">
+    <div class="panel">
+        <h2>📈 Case Status Distribution</h2>
+        <canvas id="statusChart"></canvas>
+    </div>
+    <div class="panel">
+        <h2>👥 Officer Workload</h2>
+        <ul class="officer-list">
+            {% if officer_workload %}
+                {% for officer in officer_workload %}
+                <li><span>{{ officer.name }}</span><span class="cases-badge">{{ officer.cases }}</span></li>
+                {% endfor %}
+            {% else %}
+                <li style="color: #999;">No officers assigned</li>
+            {% endif %}
+        </ul>
+    </div>
+</div>
+
+<!-- Top Barangay -->
+<div class="panel" style="margin-bottom: 30px;">
+    <h2>📍 Highest Incident Barangay</h2>
+    <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; text-align: center;">
+        <div style="font-size: 28px; color: #1e3a8a; font-weight: bold;">{{ top_barangay }}</div>
+        <div style="color: #666; margin-top: 8px;">{{ top_barangay_count }} incidents reported</div>
+    </div>
+</div>
+
+<!-- Recent Cases -->
+<div class="panel recent-cases">
+    <h2>📋 Recent Cases</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Reference No</th>
+                <th>Complainant</th>
+                <th>Status</th>
+                <th>Date Created</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if recent_cases %}
+                {% for case in recent_cases %}
+                <tr>
+                    <td><strong>{{ case.reference_no }}</strong></td>
+                    <td>{{ case.complainant_name }}</td>
+                    <td><span class="status-badge {{ case.status.lower() }}">{{ case.status }}</span></td>
+                    <td>{{ case.created_at }}</td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr><td colspan="4" style="text-align: center; color: #999;">No cases found</td></tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script>
+const statusCtx = document.getElementById('statusChart');
+if (statusCtx) {
+    new Chart(statusCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Pending', 'Ongoing', 'Closed'],
+            datasets: [{
+                label: 'Number of Cases',
+                data: {{ case_status_data | tojson }},
+                backgroundColor: ['#f5576c', '#0066cc', '#38f9d7'],
+                borderColor: ['#d94458', '#004a99', '#2ad4b8'],
+                borderWidth: 1,
+                borderRadius: 4,
+                barPercentage: 0.6
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { stepSize: 1, font: { size: 12 } },
+                    grid: { color: 'rgba(0, 61, 122, 0.08)' },
+                    title: { display: true, text: 'Cases', font: { size: 13, weight: '600' }, color: '#003d7a' }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { font: { size: 12, weight: '600' } }
+                }
+            }
+        }
+    });
+}
+</script>
+{% endblock %}

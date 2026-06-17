@@ -1,0 +1,68 @@
+{% extends "base_admin.html" %}
+{% block title %}Activity Log{% endblock %}
+
+{% block content %}
+<style>
+    body { background-color: #f5f7fa; }
+    .page-header { background: linear-gradient(180deg, #003d7a 0%, #0052a3 100%); margin: -40px -40px 40px -40px; padding: 50px 40px; border-bottom: 5px solid #0066cc; box-shadow: 0 4px 20px rgba(0, 61, 122, 0.15); }
+    .page-header h1 { color: white; margin: 0; font-size: 26px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    .panel { background: white; padding: 30px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0, 61, 122, 0.1); border-left: 6px solid #0066cc; }
+    .panel h2 { margin: 0 0 25px 0; color: #003d7a; font-size: 18px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    .activity-table { width: 100%; border-collapse: collapse; }
+    .activity-table th { background-color: #003d7a; color: white; padding: 14px; text-align: left; font-weight: 600; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px; border-bottom: 2px solid #0066cc; }
+    .activity-table td { padding: 14px; border-bottom: 1px solid #e7f0ff; font-size: 13px; }
+    .activity-table tbody tr { transition: background-color 0.2s ease; }
+    .activity-table tbody tr:hover { background-color: #f0f4f8; }
+    .activity-table tbody tr:last-child td { border-bottom: none; }
+    
+    .action-badge { display: inline-block; padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+    .action-badge.create { background-color: #d1e7dd; color: #0f5132; }
+    .action-badge.update { background-color: #cfe2ff; color: #084298; }
+    .action-badge.delete { background-color: #f8d7da; color: #842029; }
+    .action-badge.view { background-color: #d1ecf1; color: #0c5460; }
+    .action-badge.login { background-color: #e2e3e5; color: #383d41; }
+    
+    .timestamp { color: #666; font-size: 12px; }
+    .user-name { font-weight: 600; color: #003d7a; }
+</style>
+
+<div class="page-header">
+    <h1>📋 SYSTEM ACTIVITY LOG</h1>
+</div>
+
+<div class="panel">
+    <h2>Activity Records</h2>
+    <table class="activity-table">
+        <thead>
+            <tr>
+                <th>Date/Time</th>
+                <th>User</th>
+                <th>Action</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if logs %}
+                {% for log in logs %}
+                <tr>
+                    <td><span class="timestamp">{{ log[0] }}</span></td>
+                    <td><span class="user-name">{{ log[1] }}</span></td>
+                    <td>
+                        <span class="action-badge {% if 'CREATE' in log[2].upper() %}create{% elif 'UPDATE' in log[2].upper() %}update{% elif 'DELETE' in log[2].upper() %}delete{% elif 'VIEW' in log[2].upper() %}view{% elif 'LOGIN' in log[2].upper() %}login{% endif %}">
+                            {{ log[2] }}
+                        </span>
+                    </td>
+                    <td>{{ log[3] }}</td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="4" style="text-align: center; padding: 30px; color: #999;">No activity records</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

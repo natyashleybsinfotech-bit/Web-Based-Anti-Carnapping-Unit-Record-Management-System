@@ -1,0 +1,143 @@
+body{
+    margin:0;
+    font-family:Arial,sans-serif;
+    background:#f1f5f9
+}
+
+.topbar{
+    background:#d4a017;
+    padding:12px;
+    text-align:center;
+    font-weight:bold;
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    z-index:1000
+}
+
+.sidebar{
+    position:fixed;
+    top:45px;
+    left:0;
+    width:220px;
+    height:100%;
+    background:#fff;
+    padding:20px;
+    box-shadow:2px 0 5px rgba(0,0,0,.1)
+}
+
+.sidebar a{
+    display:block;
+    padding:10px;
+    margin-bottom:10px;
+    text-decoration:none;
+    color:#111;
+    font-weight:bold;
+    border-radius:6px
+}
+
+.sidebar a:hover{
+    background:#ef4444;
+    color:#fff
+}
+
+.main{
+    margin-left:250px;
+    padding:80px 30px 30px
+}
+
+.main-auth{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh
+}
+
+.card{
+    background:#fff;
+    padding:20px;
+    border-radius:10px;
+    box-shadow:0 4px 10px rgba(0,0,0,.1);
+    margin-bottom:20px
+
+}
+.auth-card{
+    width:420px
+}
+
+input,textarea,select,button{
+    width:100%;
+    padding:12px;
+    margin:8px 0;
+    box-sizing:border-box
+}
+
+button,.btn-link{
+    background:#2563eb;
+    color:#fff;
+    border:none;
+    padding:10px 14px;
+    text-decoration:none;
+    border-radius:6px;
+    display:inline-block;
+    cursor:pointer;
+    width:auto
+}
+
+.flash{
+    background:#dcfce7;
+    color:#14532d;
+    padding:10px;
+    border-radius:8px;
+    margin-bottom:15px
+}
+
+.stats-grid,.grid-2{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+    gap:20px
+}
+
+.stat{
+    font-size:32px;
+    font-weight:bold
+}
+
+.form-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px
+}
+
+.form-grid textarea,.form-grid button{
+    grid-column:1/-1
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:15px
+}
+
+th,td{
+    padding:10px;
+    border-bottom:1px solid #ddd;
+    text-align:left
+}
+
+.qr-img{
+    width:160px;
+    height:160px
+}
+
+.actions{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap
+}
+
+.small-note{
+    font-size:12px;
+    color:#555
+}

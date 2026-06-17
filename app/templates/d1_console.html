@@ -1,0 +1,469 @@
+{% extends "base_admin.html" %}
+
+{% block content %}
+<style>
+  .console-container {
+    background: #f5f7fa;
+    padding: 24px;
+    border-radius: 4px;
+    margin-bottom: 24px;
+  }
+
+  .console-header {
+    font-size: 26px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #003d7a;
+    margin-bottom: 32px;
+    border-bottom: 3px solid #0066cc;
+    padding-bottom: 12px;
+  }
+
+  .editor-section {
+    background: white;
+    border: 2px solid #e7f0ff;
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 61, 122, 0.1);
+  }
+
+  .editor-label {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.2px;
+    color: #003d7a;
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  #queryInput {
+    width: 100%;
+    min-height: 180px;
+    padding: 12px;
+    background: #fafbfc;
+    border: 2px solid #e7f0ff;
+    border-radius: 4px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 13px;
+    color: #003d7a;
+    resize: vertical;
+  }
+
+  #queryInput:focus {
+    outline: none;
+    border-color: #0066cc;
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+  }
+
+  .button-group {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+
+  .btn-execute {
+    background: linear-gradient(135deg, #0066cc 0%, #0052a3 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.2px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 61, 122, 0.15);
+  }
+
+  .btn-execute:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 61, 122, 0.25);
+  }
+
+  .btn-execute:active {
+    transform: translateY(0);
+  }
+
+  .btn-secondary {
+    background: #f0f4f8;
+    color: #003d7a;
+    border: 2px solid #e7f0ff;
+    padding: 10px 18px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.2px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .btn-secondary:hover {
+    background: #e7f0ff;
+    border-color: #0066cc;
+  }
+
+  .templates-section {
+    background: white;
+    border: 2px solid #e7f0ff;
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .templates-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 12px;
+  }
+
+  .template-btn {
+    background: #f0f4f8;
+    border: 2px solid #e7f0ff;
+    padding: 12px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    color: #003d7a;
+    text-align: left;
+    transition: all 0.3s ease;
+  }
+
+  .template-btn:hover {
+    background: #e7f0ff;
+    border-color: #0066cc;
+    box-shadow: 0 2px 8px rgba(0, 102, 204, 0.1);
+  }
+
+  .results-section {
+    background: white;
+    border: 2px solid #e7f0ff;
+    border-radius: 4px;
+    padding: 20px;
+    margin-top: 20px;
+    max-height: 600px;
+    overflow-y: auto;
+  }
+
+  .results-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+  }
+
+  .results-table thead {
+    background: #003d7a;
+    color: white;
+    position: sticky;
+    top: 0;
+  }
+
+  .results-table th {
+    padding: 12px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.2px;
+    border-bottom: 2px solid #0066cc;
+  }
+
+  .results-table td {
+    padding: 12px;
+    border-bottom: 1px solid #e7f0ff;
+    font-size: 13px;
+    color: #666;
+  }
+
+  .results-table tbody tr:hover {
+    background: #f9fafb;
+  }
+
+  .message-box {
+    padding: 16px;
+    border-radius: 4px;
+    margin-top: 16px;
+    display: none;
+    border-left: 4px solid;
+  }
+
+  .success-box {
+    background: #d1e7dd;
+    color: #198754;
+    border-left-color: #198754;
+    display: block;
+  }
+
+  .error-box {
+    background: #f8d7da;
+    color: #dc3545;
+    border-left-color: #dc3545;
+    display: block;
+  }
+
+  .info-box {
+    background: #cfe2ff;
+    color: #084298;
+    border-left-color: #0066cc;
+    display: block;
+  }
+
+  .loading {
+    display: none;
+    text-align: center;
+    color: #0066cc;
+    font-size: 13px;
+    margin-top: 16px;
+  }
+
+  .spinner {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid #e7f0ff;
+    border-top-color: #0066cc;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-right: 8px;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .row-count {
+    font-size: 12px;
+    color: #666;
+    margin-top: 12px;
+    font-style: italic;
+  }
+
+  .query-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #003d7a;
+    margin-bottom: 8px;
+  }
+</style>
+
+<div class="console-container">
+  <div class="console-header">📊 D1 Cloud Database Console</div>
+
+  <!-- Query Editor Section -->
+  <div class="editor-section">
+    <label class="editor-label">💾 Enter SQL Query</label>
+    <textarea id="queryInput" placeholder="SELECT * FROM cases; or INSERT/UPDATE/DELETE queries..."></textarea>
+    <div class="button-group">
+      <button class="btn-execute" onclick="executeQuery()">⚡ Execute Query</button>
+      <button class="btn-secondary" onclick="clearQuery()">Clear</button>
+    </div>
+    <div class="loading" id="loading">
+      <span class="spinner"></span>Executing query...
+    </div>
+  </div>
+
+  <!-- Quick Templates Section -->
+  <div class="templates-section">
+    <label class="editor-label">📋 Quick Templates</label>
+    <div class="templates-grid">
+      <button class="template-btn" onclick="loadTemplate('SELECT COUNT(*) as total FROM cases;')">
+        <div class="query-title">Total Cases</div>
+        Count all cases in database
+      </button>
+      <button class="template-btn" onclick="loadTemplate('SELECT id, case_reference_number, status FROM cases LIMIT 10;')">
+        <div class="query-title">Recent Cases</div>
+        View last 10 cases
+      </button>
+      <button class="template-btn" onclick="loadTemplate('SELECT status, COUNT(*) as count FROM cases GROUP BY status;')">
+        <div class="query-title">Cases by Status</div>
+        Count cases per status
+      </button>
+      <button class="template-btn" onclick="loadTemplate('SELECT * FROM users WHERE role = \"officer\";')">
+        <div class="query-title">All Officers</div>
+        List all officer users
+      </button>
+      <button class="template-btn" onclick="loadTemplate('SELECT * FROM users WHERE role = \"admin\";')">
+        <div class="query-title">All Admins</div>
+        List all admin users
+      </button>
+      <button class="template-btn" onclick="loadTemplate('SELECT barangay_number, COUNT(*) as incident_count FROM cases GROUP BY barangay_number ORDER BY incident_count DESC;')">
+        <div class="query-title">Hotspots</div>
+        Cases by barangay
+      </button>
+      <button class="template-btn" onclick="loadTemplate('SELECT assigned_officer_id, COUNT(*) as case_count FROM cases WHERE assigned_officer_id IS NOT NULL GROUP BY assigned_officer_id;')">
+        <div class="query-title">Officer Workload</div>
+        Cases per officer
+      </button>
+      <button class="template-btn" onclick="loadTemplate('SELECT DATE(incident_date) as date, COUNT(*) as count FROM cases GROUP BY DATE(incident_date) ORDER BY date DESC LIMIT 30;')">
+        <div class="query-title">Cases by Date</div>
+        Last 30 days trend
+      </button>
+    </div>
+  </div>
+
+  <!-- Sync Instructions -->
+  <div class="templates-section">
+    <label class="editor-label">🔄 Sync Local Data to Cloud</label>
+    <p style="font-size: 13px; color: #666; margin-bottom: 16px;">
+      Use these commands to sync your local MySQL database to Cloudflare D1:
+    </p>
+    <div class="templates-grid">
+      <button class="template-btn" onclick="loadTemplate('-- SYNC: Insert all users from local MySQL\nINSERT INTO users (id, full_name, username, password_hash, role, is_active)\nSELECT id, full_name, username, password_hash, role, is_active FROM users\nWHERE id NOT IN (SELECT id FROM users);')">
+        <div class="query-title">Sync Users</div>
+        Copy user accounts to D1
+      </button>
+      <button class="template-btn" onclick="loadTemplate('-- SYNC: Insert all cases from local MySQL\nINSERT INTO cases (id, vehicle_type, vehicle_color, incident_date, incident_location, status, assigned_officer_id, case_reference_number, barangay_number)\nSELECT id, vehicle_type, vehicle_color, incident_date, incident_location, status, assigned_officer_id, case_reference_number, barangay_number FROM cases\nWHERE id NOT IN (SELECT id FROM cases);')">
+        <div class="query-title">Sync Cases</div>
+        Copy all cases to D1
+      </button>
+      <button class="template-btn" onclick="loadTemplate('-- SYNC: Insert all activity logs from local MySQL\nINSERT INTO activity_logs (id, user_id, action, description, timestamp)\nSELECT id, user_id, action, description, timestamp FROM activity_logs\nWHERE id NOT IN (SELECT id FROM activity_logs);')">
+        <div class="query-title">Sync Activity Logs</div>
+        Copy activity logs to D1
+      </button>
+    </div>
+    <div class="info-box" id="syncInfo" style="display: none; margin-top: 16px;">
+      ℹ️ The queries above will sync only NEW records. Existing records in D1 won't be duplicated.
+    </div>
+  </div>
+
+  <!-- Results Section -->
+  <div class="results-section" id="resultsSection" style="display: none;">
+    <div class="results-title" style="font-size: 13px; font-weight: 600; color: #003d7a; margin-bottom: 16px;">📋 Query Results</div>
+    <table class="results-table" id="resultsTable">
+      <thead id="resultsHead"></thead>
+      <tbody id="resultsBody"></tbody>
+    </table>
+    <div class="row-count" id="rowCount"></div>
+  </div>
+</div>
+
+<script>
+  function loadTemplate(query) {
+    document.getElementById('queryInput').value = query;
+    document.getElementById('queryInput').focus();
+  }
+
+  function clearQuery() {
+    document.getElementById('queryInput').value = '';
+    document.getElementById('resultsSection').style.display = 'none';
+    document.getElementById('queryInput').focus();
+  }
+
+  async function executeQuery() {
+    const query = document.getElementById('queryInput').value.trim();
+    
+    if (!query) {
+      showError('Please enter a SQL query');
+      return;
+    }
+
+    const loading = document.getElementById('loading');
+    loading.style.display = 'block';
+
+    try {
+      const response = await fetch('{{ url_for("main.execute_d1_query") }}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query: query })
+      });
+
+      const data = await response.json();
+      loading.style.display = 'none';
+
+      if (data.error) {
+        showError(data.error);
+      } else if (data.results && data.results.length > 0) {
+        displayResults(data.results);
+        showSuccess(`✓ Query executed successfully - ${data.results.length} row(s) returned`);
+      } else if (data.success) {
+        showSuccess(data.message || '✓ Query executed successfully');
+        document.getElementById('resultsSection').style.display = 'none';
+      } else {
+        showSuccess('✓ Query executed successfully');
+      }
+    } catch (error) {
+      loading.style.display = 'none';
+      showError('Error: ' + error.message);
+    }
+  }
+
+  function displayResults(rows) {
+    if (!rows || rows.length === 0) {
+      document.getElementById('resultsSection').style.display = 'none';
+      return;
+    }
+
+    const thead = document.getElementById('resultsHead');
+    const tbody = document.getElementById('resultsBody');
+    const rowCount = document.getElementById('rowCount');
+
+    thead.innerHTML = '';
+    tbody.innerHTML = '';
+
+    const headers = Object.keys(rows[0]);
+    const headerRow = thead.insertRow();
+    headers.forEach(header => {
+      const th = document.createElement('th');
+      th.textContent = header;
+      headerRow.appendChild(th);
+    });
+
+    rows.forEach(row => {
+      const tr = tbody.insertRow();
+      headers.forEach(header => {
+        const td = tr.insertCell();
+        let value = row[header];
+        if (value === null || value === undefined) {
+          td.textContent = 'NULL';
+          td.style.color = '#999';
+          td.style.fontStyle = 'italic';
+        } else {
+          td.textContent = String(value).substring(0, 100);
+        }
+      });
+    });
+
+    rowCount.textContent = `Total: ${rows.length} row${rows.length !== 1 ? 's' : ''}`;
+    document.getElementById('resultsSection').style.display = 'block';
+  }
+
+  function showError(message) {
+    const messageBox = document.createElement('div');
+    messageBox.className = 'message-box error-box';
+    messageBox.textContent = '❌ ' + message;
+    
+    const container = document.querySelector('.console-container');
+    const existing = container.querySelector('.message-box');
+    if (existing) existing.remove();
+    
+    container.appendChild(messageBox);
+    setTimeout(() => messageBox.remove(), 5000);
+  }
+
+  function showSuccess(message) {
+    const messageBox = document.createElement('div');
+    messageBox.className = 'message-box success-box';
+    messageBox.textContent = message;
+    
+    const container = document.querySelector('.console-container');
+    const existing = container.querySelector('.message-box');
+    if (existing) existing.remove();
+    
+    container.appendChild(messageBox);
+    setTimeout(() => messageBox.remove(), 4000);
+  }
+
+  // Show sync info on page load
+  window.addEventListener('load', () => {
+    document.getElementById('syncInfo').style.display = 'block';
+  });
+</script>
+{% endblock %}

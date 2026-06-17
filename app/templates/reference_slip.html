@@ -1,0 +1,75 @@
+{% extends "base_admin.html" %}
+{% block title %}Reference Slip{% endblock %}
+
+{% block content %}
+<style>
+    .slip-container { max-width: 600px; margin: 40px auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 24px rgba(0,0,0,0.1); border-top: 8px solid #003d7a; text-align: center; }
+    .slip-header { margin-bottom: 30px; }
+    .slip-header h2 { color: #003d7a; margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 1px; }
+    .slip-header p { color: #64748b; margin: 5px 0 0; font-size: 14px; }
+    
+    .qr-box { margin: 30px 0; padding: 20px; background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 8px; display: inline-block; }
+    .qr-box img { width: 200px; height: 200px; }
+    
+    .details-table { width: 100%; text-align: left; border-collapse: collapse; margin-bottom: 30px; }
+    .details-table th, .details-table td { padding: 12px; border-bottom: 1px solid #f1f5f9; }
+    .details-table th { color: #64748b; font-weight: 600; width: 40%; font-size: 13px; text-transform: uppercase; }
+    .details-table td { color: #1e293b; font-weight: 500; font-size: 15px; }
+    
+    .ref-badge { background: #eef2ff; color: #4f46e5; padding: 6px 12px; border-radius: 4px; font-family: monospace; font-size: 18px; font-weight: bold; border: 1px solid #c7d2fe; display: inline-block; }
+    
+    .print-btn { background: #003d7a; color: white; border: none; padding: 12px 24px; border-radius: 4px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: background 0.2s; }
+    .print-btn:hover { background: #002855; }
+    .track-link { margin-left: 15px; color: #0066cc; text-decoration: none; font-weight: 500; }
+    .track-link:hover { text-decoration: underline; }
+
+    @media print {
+        body * { visibility: hidden; }
+        .slip-container, .slip-container * { visibility: visible; }
+        .slip-container { position: absolute; left: 0; top: 0; margin: 0; padding: 20px; box-shadow: none; border: none; width: 100%; }
+        .print-btn, .track-link { display: none !important; }
+    }
+</style>
+
+<div class="slip-container">
+    <div class="slip-header">
+        <h2>Case Reference Slip</h2>
+        <p>PNP Anti-Carnapping Unit — Manila Police District</p>
+    </div>
+
+    <div class="details-table">
+        <table>
+            <tr>
+                <th>Reference Number</th>
+                <td><span class="ref-badge">{{ case.reference_no }}</span></td>
+            </tr>
+            <tr>
+                <th>Complainant Name</th>
+                <td>{{ case.complainant_name }}</td>
+            </tr>
+            <tr>
+                <th>Email Address</th>
+                <td>{{ case.complainant_email }}</td>
+            </tr>
+            <tr>
+                <th>Incident Location</th>
+                <td>{{ case.incident_location }}</td>
+            </tr>
+            <tr>
+                <th>Current Status</th>
+                <td><span style="background: #fff3cd; color: #856404; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; text-transform: uppercase;">{{ case.status }}</span></td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="qr-box">
+        <img src="{{ url_for('static', filename='qr/' ~ case.reference_no ~ '.png') }}" alt="Track Case QR Code">
+        <p style="margin: 10px 0 0; color: #64748b; font-size: 12px; font-weight: 500;">Scan QR to track case status</p>
+    </div>
+
+    <div style="margin-top: 20px;">
+        <button class="print-btn" onclick="window.print()">🖨️ Print Slip</button>
+        <a class="track-link" href="{{ url_for('main.track_case', reference_no=case.reference_no) }}">Or go to tracking page ➔</a>
+    </div>
+</div>
+{% endblock %}

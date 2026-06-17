@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}PNP Case System{% endblock %}</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            background: #f4f6f9;
+        }
+
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: #0f172a;
+            color: white;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            text-align: center;
+            padding: 25px 15px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar-logo {
+            width: 85px;
+            height: 85px;
+            object-fit: contain;
+            margin-bottom: 10px;
+        }
+
+        .sidebar-header h2 {
+            margin: 0;
+            font-size: 20px;
+            color: white;
+        }
+
+        .sidebar-subtitle {
+            margin-top: 5px;
+            font-size: 13px;
+            color: #cbd5e1;
+        }
+
+        .user-box {
+            padding: 15px 20px;
+            background: rgba(255,255,255,0.04);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            font-size: 14px;
+            color: #e2e8f0;
+        }
+
+        .user-box strong {
+            display: block;
+            color: white;
+            margin-bottom: 4px;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            flex: 1;
+        }
+
+        .sidebar-menu li {
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+
+        .sidebar-menu li a {
+            display: block;
+            padding: 14px 22px;
+            color: #e2e8f0;
+            text-decoration: none;
+            transition: 0.2s;
+            font-size: 15px;
+        }
+
+        .sidebar-menu li a:hover {
+            background: #1e293b;
+            color: white;
+        }
+
+        .logout-link {
+            background: #991b1b;
+            color: white !important;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .logout-link:hover {
+            background: #7f1d1d !important;
+        }
+
+        /* Main */
+        .main {
+            flex: 1;
+            padding: 30px;
+        }
+
+        .topbar {
+            background: white;
+            padding: 18px 24px;
+            border-radius: 12px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.06);
+            margin-bottom: 25px;
+        }
+
+        .topbar h1 {
+            margin: 0;
+            font-size: 24px;
+            color: #1e293b;
+        }
+
+        .topbar p {
+            margin: 5px 0 0;
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .panel {
+            background: white;
+            padding: 25px;
+            border-radius: 14px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+            margin-bottom: 25px;
+        }
+
+        .panel h2 {
+            margin-top: 0;
+            color: #1e293b;
+        }
+
+        .flash-message {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 18px;
+            background: #dbeafe;
+            color: #1e3a8a;
+            font-size: 14px;
+            border-left: 5px solid #2563eb;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-block;
+            padding: 10px 16px;
+            background: #1d4ed8;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            text-decoration: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn:hover {
+            background: #1e40af;
+        }
+
+        /* Forms */
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="date"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px;
+            margin-top: 6px;
+            margin-bottom: 16px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        label {
+            font-weight: bold;
+            color: #334155;
+            font-size: 14px;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background: white;
+        }
+
+        table th,
+        table td {
+            padding: 12px 14px;
+            border-bottom: 1px solid #e2e8f0;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        table th {
+            background: #f8fafc;
+            color: #334155;
+        }
+
+        /* Status badges */
+        .status-pending,
+        .status-ongoing,
+        .status-closed {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-ongoing {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .status-closed {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .layout {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+            }
+
+            .main {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <img src="{{ url_for('static', filename='images/pnpseal.png') }}" alt="PNP Logo" class="sidebar-logo">
+            <h2>Anti-Carnapping Unit - MPD</h2>
+            <p class="sidebar-subtitle">Carnapping Records Management and Processing</p>
+        </div>
+
+        <div class="user-box">
+            <strong>{{ session.get("full_name", "User") }}</strong>
+            {{ session.get("role", "guest")|capitalize }}
+        </div>
+
+        <ul class="sidebar-menu">
+            <!-- DASHBOARD -->
+            {% if session.get("role") == "admin" %}
+                <li><a href="{{ url_for('main.admin_dashboard') }}">Dashboard</a></li>
+            {% elif session.get("role") == "officer" %}
+                <li><a href="{{ url_for('main.officer_dashboard') }}">Dashboard</a></li>
+            {% endif %}
+
+            <!-- ADMIN ONLY -->
+            {% if session.get("role") == "admin" %}
+                <li><a href="{{ url_for('main.manage_users') }}">Manage Users</a></li>
+            {% endif %}
+
+            <!-- SHARED -->
+            <li><a href="{{ url_for('main.new_case') }}">Process Case</a></li>
+            <li><a href="{{ url_for('main.queue') }}">Queue</a></li>
+            <li><a href="{{ url_for('main.reports') }}">Reports</a></li>
+
+            <!-- ADMIN ONLY -->
+            {% if session.get("role") == "admin" %}
+                <li><a href="{{ url_for('main.activity_log') }}">Activity Log</a></li>
+                <li><a href="{{ url_for('main.hotspots_map') }}">🗺️ Hotspots Map</a></li>
+                <li><a href="{{ url_for('main.manage_backups') }}">💾 Database Backups</a></li>
+            {% endif %}
+
+            <li><a href="{{ url_for('main.logout') }}" class="logout-link">Logout</a></li>
+        </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="topbar">
+            <h1>{% block page_title %}System Dashboard{% endblock %}</h1>
+            <p>Welcome to the Carnapping Case Management System</p>
+        </div>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for msg in messages %}
+                    <div class="flash-message">{{ msg }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

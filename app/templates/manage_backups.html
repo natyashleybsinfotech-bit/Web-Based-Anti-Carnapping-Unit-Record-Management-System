@@ -1,0 +1,147 @@
+{% extends "base_admin.html" %}
+{% block title %}Database Backups{% endblock %}
+
+{% block content %}
+<style>
+    body { background-color: #f5f7fa; }
+    .page-header { background: linear-gradient(180deg, #003d7a 0%, #0052a3 100%); margin: -40px -40px 40px -40px; padding: 50px 40px; border-bottom: 5px solid #0066cc; box-shadow: 0 4px 20px rgba(0, 61, 122, 0.15); }
+    .page-header h1 { color: white; margin: 0; font-size: 26px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    .panel { background: white; padding: 30px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0, 61, 122, 0.1); border-left: 6px solid #0066cc; margin-bottom: 30px; }
+    .panel h2 { margin: 0 0 25px 0; color: #003d7a; font-size: 18px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    .action-buttons { display: flex; gap: 10px; margin-bottom: 30px; }
+    .btn-create { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; padding: 14px 30px; border: none; border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3); transition: all 0.3s ease; }
+    .btn-create:hover { background: linear-gradient(135deg, #20c997 0%, #1a9d6e 100%); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4); }
+    
+    .info-box { background-color: #d1e7dd; border-left: 4px solid #28a745; padding: 16px 18px; border-radius: 4px; margin-bottom: 20px; font-size: 13px; color: #0f5132; font-weight: 500; }
+    .info-box.warning { background-color: #fff3cd; border-left-color: #ffc107; color: #664d03; }
+    
+    .backups-table { width: 100%; border-collapse: collapse; }
+    .backups-table th { background-color: #003d7a; color: white; padding: 14px; text-align: left; font-weight: 600; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px; border-bottom: 2px solid #0066cc; }
+    .backups-table td { padding: 14px; border-bottom: 1px solid #e7f0ff; }
+    .backups-table tbody tr { transition: background-color 0.2s ease; }
+    .backups-table tbody tr:hover { background-color: #f0f4f8; }
+    .backups-table tbody tr:last-child td { border-bottom: none; }
+    
+    .no-data { text-align: center; padding: 40px 20px; color: #6c757d; }
+    .no-data-icon { font-size: 48px; margin-bottom: 10px; }
+    
+    .action-buttons-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-sm { padding: 6px 12px; border-radius: 4px; border: none; font-size: 11px; font-weight: 600; cursor: pointer; text-transform: uppercase; }
+    .btn-restore { background: #0066cc; color: white; }
+    .btn-restore:hover { background: #0052a3; }
+    .btn-delete { background: #dc3545; color: white; }
+    .btn-delete:hover { background: #c82333; }
+    .btn-export-row { background: linear-gradient(135deg, #6f42c1, #9b59b6); color: white; cursor: pointer; }
+    .btn-export-row:hover { background: linear-gradient(135deg, #5a32a3, #7d3c98); }
+    .row-export-wrap { position: relative; display: inline-block; }
+    .row-export-menu { display: none; position: absolute; top: calc(100% + 4px); left: 0; background: white; border-radius: 6px; box-shadow: 0 6px 20px rgba(0,0,0,0.15); min-width: 180px; z-index: 999; border: 1px solid #e0e0e0; overflow: hidden; }
+    .row-export-menu.open { display: block; }
+    .row-export-opt { display: block; padding: 10px 14px; text-decoration: none; color: #1e293b; font-size: 12px; font-weight: 600; transition: background 0.15s; border-bottom: 1px solid #f0f0f0; }
+    .row-export-opt:last-child { border-bottom: none; }
+    .row-export-opt:hover { background: #f0f4ff; }
+    
+    .backup-filename { font-family: monospace; font-size: 12px; }
+    .size-badge { background: #e7f0ff; padding: 4px 8px; border-radius: 4px; font-size: 11px; }
+</style>
+
+<div class="page-header">
+    <h1>💾 DATABASE BACKUPS</h1>
+</div>
+
+<div class="panel">
+    <h2>Backup Management</h2>
+    
+    <div class="info-box">
+        <strong>✓ Automatic Backups:</strong> Create backups manually before major operations. Store backups in a safe location.
+    </div>
+    
+    <div class="action-buttons">
+        <form method="POST" action="{{ url_for('main.backup_database') }}">
+            <button type="submit" class="btn-create" onclick="return confirm('Create a new database backup?');">+ CREATE BACKUP NOW</button>
+        </form>
+    </div>
+
+    <style>
+        .export-dropdown { position: relative; display: inline-block; }
+        .btn-export { background: linear-gradient(135deg, #6f42c1 0%, #9b59b6 100%); box-shadow: 0 2px 8px rgba(111,66,193,0.3); }
+        .btn-export:hover { background: linear-gradient(135deg, #5a32a3 0%, #7d3c98 100%); }
+        .export-menu { display: none; position: absolute; top: calc(100% + 8px); left: 0; background: white; border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); min-width: 240px; z-index: 999; border: 1px solid #e0e0e0; overflow: hidden; }
+        .export-menu.open { display: block; }
+        .export-option { display: flex; align-items: center; gap: 14px; padding: 14px 18px; text-decoration: none; color: #1e293b; transition: background 0.15s; border-bottom: 1px solid #f0f0f0; }
+        .export-option:last-child { border-bottom: none; }
+        .export-option:hover { background: #f0f4ff; }
+        .export-option strong { display: block; font-size: 13px; }
+        .export-option small { color: #64748b; font-size: 11px; }
+        .export-icon { font-size: 22px; flex-shrink: 0; }
+    </style>
+    <script>
+        function toggleExportMenu(e) {
+            e.stopPropagation();
+            closeAllMenus();
+            document.getElementById('exportMenu').classList.toggle('open');
+        }
+        function toggleRowMenu(e, idx) {
+            e.stopPropagation();
+            closeAllMenus();
+            document.getElementById('rowMenu' + idx).classList.toggle('open');
+        }
+        function closeAllMenus() {
+            document.querySelectorAll('.export-menu, .row-export-menu').forEach(m => m.classList.remove('open'));
+        }
+        document.addEventListener('click', closeAllMenus);
+    </script>
+    
+    {% if backups %}
+        <table class="backups-table">
+            <thead>
+                <tr>
+                    <th>Backup File</th>
+                    <th>Size (MB)</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for backup in backups %}
+                <tr>
+                    <td><span class="backup-filename">{{ backup['name'] }}</span></td>
+                    <td><span class="size-badge">{{ backup['size_mb'] }} MB</span></td>
+                    <td>{{ backup['created_at'] }}</td>
+                    <td>
+                        <div class="action-buttons-row">
+                            <!-- Per-row export dropdown -->
+                            <div class="row-export-wrap">
+                                <button class="btn-sm btn-export-row" onclick="toggleRowMenu(event, '{{ loop.index }}')">📤 Export ▾</button>
+                                <div class="row-export-menu" id="rowMenu{{ loop.index }}">
+                                    <a href="{{ url_for('main.download_database_pdf') }}" class="row-export-opt">📄 PDF Report</a>
+                                    <a href="{{ url_for('main.download_database_excel') }}" class="row-export-opt">📊 Excel (.xlsx)</a>
+                                    <a href="{{ url_for('main.download_database_csv') }}" class="row-export-opt">📥 CSV (.zip)</a>
+                                    <a href="{{ url_for('main.download_backup', backup_name=backup['name']) }}" class="row-export-opt">🗄️ SQL File</a>
+                                </div>
+                            </div>
+                            <form method="POST" action="{{ url_for('main.restore_database', backup_name=backup['name']) }}" style="display: inline;" onsubmit="return confirm('Restore database from this backup? Current data will be replaced.');">
+                                <button type="submit" class="btn-sm btn-restore">Restore</button>
+                            </form>
+                            <form method="POST" action="{{ url_for('main.delete_backup', backup_name=backup['name']) }}" style="display: inline;" onsubmit="return confirm('Delete this backup? This action cannot be undone.');">
+                                <button type="submit" class="btn-sm btn-delete">Delete</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="no-data">
+            <div class="no-data-icon">📭</div>
+            <p>No backups available. Create one to get started.</p>
+        </div>
+    {% endif %}
+</div>
+
+<div class="panel info-box warning">
+    <strong>⚠ Important:</strong> Regular backups are critical for data recovery. Test restore procedures to ensure backups are valid.
+</div>
+{% endblock %}

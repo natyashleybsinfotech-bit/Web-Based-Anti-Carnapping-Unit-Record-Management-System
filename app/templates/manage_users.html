@@ -1,0 +1,126 @@
+{% extends "base_admin.html" %}
+{% block title %}Manage Users{% endblock %}
+
+{% block content %}
+<style>
+    body { background-color: #f5f7fa; }
+    .page-header { background: linear-gradient(180deg, #003d7a 0%, #0052a3 100%); margin: -40px -40px 40px -40px; padding: 50px 40px; border-bottom: 5px solid #0066cc; box-shadow: 0 4px 20px rgba(0, 61, 122, 0.15); }
+    .page-header h1 { color: white; margin: 0; font-size: 26px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    .panel { background: white; padding: 30px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0, 61, 122, 0.1); border-left: 6px solid #0066cc; margin-bottom: 30px; }
+    .panel h2 { margin: 0 0 25px 0; color: #003d7a; font-size: 18px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    .form-section { background-color: #f0f4f8; padding: 25px; border-radius: 4px; margin-bottom: 25px; border: 2px solid #e7f0ff; }
+    .form-section h3 { margin: 0 0 20px 0; color: #003d7a; font-size: 16px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+    
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 20px; }
+    
+    .form-group { display: flex; flex-direction: column; }
+    .form-group label { font-weight: 600; color: #003d7a; margin-bottom: 8px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.2px; }
+    .form-group input,
+    .form-group select { padding: 12px 14px; border: 2px solid #e7f0ff; border-radius: 4px; font-size: 14px; background-color: #fafbfc; transition: all 0.3s ease; font-family: inherit; }
+    .form-group input:focus,
+    .form-group select:focus { outline: none; border-color: #0066cc; background-color: white; box-shadow: 0 0 0 4px rgba(0, 102, 204, 0.1); }
+    
+    .btn-submit { background: linear-gradient(135deg, #0066cc 0%, #0052a3 100%); color: white; padding: 14px 30px; border: none; border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 2px 8px rgba(0, 102, 204, 0.3); transition: all 0.3s ease; }
+    .btn-submit:hover { background: linear-gradient(135deg, #0052a3 0%, #003d7a 100%); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 102, 204, 0.4); }
+    
+    .info-box { background-color: #cfe2ff; border-left: 4px solid #0066cc; padding: 16px 18px; border-radius: 4px; margin-bottom: 20px; font-size: 13px; color: #084298; font-weight: 500; }
+    .info-box strong { color: #0052a3; display: block; margin-bottom: 4px; }
+    
+    .users-table { width: 100%; border-collapse: collapse; }
+    .users-table th { background-color: #003d7a; color: white; padding: 14px; text-align: left; font-weight: 600; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px; border-bottom: 2px solid #0066cc; }
+    .users-table td { padding: 14px; border-bottom: 1px solid #e7f0ff; }
+    .users-table tbody tr { transition: background-color 0.2s ease; }
+    .users-table tbody tr:hover { background-color: #f0f4f8; }
+    .users-table tbody tr:last-child td { border-bottom: none; }
+    .status-badge { display: inline-block; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; text-transform: uppercase; }
+    .status-badge.active { background-color: #d1e7dd; color: #0f5132; }
+    .status-badge.inactive { background-color: #f8d7da; color: #842029; }
+</style>
+
+<div class="page-header">
+    <h1>⚙ USER MANAGEMENT</h1>
+</div>
+
+<div class="panel">
+    <h2>Create New User Account</h2>
+    
+    <div class="form-section">
+        <h3>New User Registration</h3>
+        <div class="info-box">
+            <strong>⚠ DEFAULT CREDENTIALS:</strong>
+            Users will be created with password "default123" and must change it on first login.
+        </div>
+        
+        <form method="POST" action="{{ url_for('main.create_user') }}">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Full Name *</label>
+                    <input type="text" name="full_name" required placeholder="Enter full name">
+                </div>
+                <div class="form-group">
+                    <label>Username *</label>
+                    <input type="text" name="username" required placeholder="Enter username">
+                </div>
+            </div>
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" name="email" placeholder="Enter email address">
+                </div>
+                <div class="form-group">
+                    <label>Role *</label>
+                    <select name="role" required>
+                        <option value="">-- Select Role --</option>
+                        <option value="officer">Police Officer</option>
+                        <option value="admin">Administrator</option>
+                    </select>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn-submit">+ CREATE USER ACCOUNT</button>
+        </form>
+    </div>
+
+    <!-- Users List -->
+    <h2 style="margin-top: 40px;">Existing Users</h2>
+    <table class="users-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Full Name</th>
+                <th>Username</th>
+                <th>Role</th>
+                <th>Email</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>#{{ user[0] }}</td>
+                <td><strong>{{ user[1] }}</strong></td>
+                <td>{{ user[2] }}</td>
+                <td><span style="background: #e0e6ed; padding: 4px 10px; border-radius: 4px; font-weight: 600; font-size: 12px; text-transform: uppercase;">{{ user[3] }}</span></td>
+                <td>{{ user[4] if user[4] else '—' }}</td>
+                <td><span class="status-badge {% if user[5] == 1 %}active{% else %}inactive{% endif %}">{{ 'Active' if user[5] == 1 else 'Inactive' }}</span></td>
+                <td>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <a href="{{ url_for('main.edit_user', user_id=user[0]) }}" style="background: #0066cc; color: white; padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: 600; text-decoration: none; cursor: pointer; display: inline-block; text-transform: uppercase;">Edit</a>
+                        <form method="POST" action="{{ url_for('main.toggle_user_status', user_id=user[0]) }}" style="display: inline;">
+                            <button type="submit" style="background: {% if user[5] == 1 %}#ffc107{% else %}#28a745{% endif %}; color: white; padding: 6px 12px; border-radius: 4px; border: none; font-size: 11px; font-weight: 600; cursor: pointer; text-transform: uppercase;" onclick="return confirm('Toggle {{ 'disable' if user[5] == 1 else 'enable' }} this user?');">{{ 'Disable' if user[5] == 1 else 'Enable' }}</button>
+                        </form>
+                        <form method="POST" action="{{ url_for('main.delete_user', user_id=user[0]) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this user? This action cannot be undone.');">
+                            <button type="submit" style="background: #dc3545; color: white; padding: 6px 12px; border-radius: 4px; border: none; font-size: 11px; font-weight: 600; cursor: pointer; text-transform: uppercase;">Delete</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

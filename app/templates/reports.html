@@ -1,0 +1,471 @@
+{% extends "base_admin.html" %}
+{% block title %}Reports{% endblock %}
+
+{% block content %}
+<style>
+    body { background-color: #f5f7fa; }
+    
+    .reports-header {
+        background: linear-gradient(180deg, #003d7a 0%, #0052a3 100%);
+        margin: -40px -40px 40px -40px;
+        padding: 50px 40px;
+        border-bottom: 5px solid #0066cc;
+        box-shadow: 0 4px 20px rgba(0, 61, 122, 0.15);
+    }
+    
+    .reports-header h1 {
+        color: white;
+        margin: 0 0 10px 0;
+        font-size: 26px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .reports-header p {
+        color: #e7f0ff;
+        margin: 0;
+        font-size: 15px;
+        font-weight: 600;
+    }
+    
+    .period-selector {
+        display: flex;
+        gap: 15px;
+        margin: 25px 0 30px 0;
+        flex-wrap: wrap;
+    }
+    
+    .period-btn {
+        padding: 12px 30px;
+        border: 2px solid #0066cc;
+        background-color: white;
+        color: #003d7a;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 700;
+        font-size: 13px;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .period-btn:hover {
+        border-color: #0066cc;
+        color: #0066cc;
+        background-color: #f0f4f8;
+    }
+    
+    .period-btn.active {
+        background: linear-gradient(135deg, #0066cc 0%, #0052a3 100%);
+        color: white;
+        border-color: #0066cc;
+        box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 18px;
+        margin-bottom: 40px;
+    }
+    
+    .stat-box {
+        background: white;
+        color: #003d7a;
+        padding: 25px;
+        border-radius: 4px;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0, 61, 122, 0.1);
+        border-left: 6px solid #0066cc;
+    }
+    
+    .stat-box.high {
+        border-left-color: #0052a3;
+    }
+    
+    .stat-box.avg {
+        border-left-color: #004a99;
+    }
+    
+    .stat-box.peak {
+        border-left-color: #003d7a;
+    }
+    
+    .stat-box h4 {
+        margin: 0 0 12px 0;
+        font-size: 13px;
+        opacity: 0.8;
+        text-transform: uppercase;
+        letter-spacing: 1.2px;
+        font-weight: 700;
+        color: #003d7a;
+    }
+    
+    .stat-box .value {
+        font-size: 40px;
+        font-weight: bold;
+        margin: 8px 0;
+        color: #0066cc;
+    }
+    
+    .panel {
+        background: white;
+        padding: 30px;
+        border-radius: 4px;
+        box-shadow: 0 2px 8px rgba(0, 61, 122, 0.1);
+        border-left: 6px solid #0066cc;
+        margin-bottom: 30px;
+    }
+    
+    .panel h2 {
+        margin: 0 0 25px 0;
+        color: #003d7a;
+        font-size: 18px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .report-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .report-table thead {
+        background-color: #003d7a;
+        color: white;
+    }
+    
+    .report-table th {
+        padding: 14px;
+        text-align: left;
+        font-weight: 700;
+        color: white;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #0066cc;
+    }
+    
+    .report-table td {
+        padding: 14px;
+        border-bottom: 1px solid #e7f0ff;
+        font-size: 13px;
+    }
+    
+    .report-table tbody tr {
+        transition: background-color 0.2s ease;
+    }
+    
+    .report-table tbody tr:hover {
+        background-color: #f0f4f8;
+    }
+    
+    .period-badge {
+        background-color: #cfe2ff;
+        color: #084298;
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+    
+    .cases-count {
+        background: linear-gradient(135deg, #0066cc 0%, #0052a3 100%);
+        color: white;
+        padding: 6px 14px;
+        border-radius: 4px;
+        font-weight: 700;
+        display: inline-block;
+        font-size: 12px;
+        text-transform: uppercase;
+    }
+    
+    .export-section {
+        display: flex;
+        gap: 15px;
+        margin-top: 25px;
+        padding-top: 25px;
+        border-top: 2px solid #e7f0ff;
+    }
+    
+    .btn-export {
+        background: linear-gradient(135deg, #0066cc 0%, #0052a3 100%);
+        color: white;
+        padding: 12px 25px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 700;
+        font-size: 13px;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: 0 2px 8px rgba(0, 102, 204, 0.3);
+    }
+    
+    .btn-export:hover {
+        background: linear-gradient(135deg, #a82420 0%, #8b1c18 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(199, 48, 42, 0.4);
+    }
+    
+    .btn-export:active {
+        transform: translateY(0);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 40px;
+        color: #999;
+    }
+    
+    .empty-state p {
+        font-size: 16px;
+        margin: 0;
+    }
+</style>
+
+<div class="reports-header">
+    <h1>📊 INCIDENT REPORTS & ANALYTICS</h1>
+    <p>Case statistics and trends analysis by time period</p>
+</div>
+
+<!-- Period Selector -->
+<div class="period-selector">
+    <a href="{{ url_for('main.reports', period='weekly') }}" class="period-btn {% if period == 'weekly' %}active{% endif %}">
+        📅 Weekly Report
+    </a>
+    <a href="{{ url_for('main.reports', period='monthly') }}" class="period-btn {% if period == 'monthly' %}active{% endif %}">
+        📆 Monthly Report
+    </a>
+    <a href="{{ url_for('main.reports', period='annually') }}" class="period-btn {% if period == 'annually' %}active{% endif %}">
+        📊 Annually Report
+    </a>
+</div>
+
+<!-- Statistics Summary -->
+{% if report_data %}
+<div class="stats-grid">
+    <div class="stat-box">
+        <h4>Total Cases</h4>
+        <div class="value">
+            {% set total = report_data | map(attribute=1) | sum %}
+            {{ total }}
+        </div>
+        <div style="font-size: 12px; opacity: 0.9;">All {{ period }} data</div>
+    </div>
+    
+    <div class="stat-box high">
+        <h4>Highest Week/Month</h4>
+        <div class="value">
+            {% set max_val = report_data | map(attribute=1) | max %}
+            {{ max_val }}
+        </div>
+        <div style="font-size: 12px; opacity: 0.9;">Peak period</div>
+    </div>
+    
+    <div class="stat-box avg">
+        <h4>Average</h4>
+        <div class="value">
+            {% if report_data | length > 0 %}
+                {% set avg = (report_data | map(attribute=1) | sum) / (report_data | length) %}
+                {{ "%.0f" | format(avg) }}
+            {% else %}
+                0
+            {% endif %}
+        </div>
+        <div style="font-size: 12px; opacity: 0.9;">Per {{ period[:-2] }}</div>
+    </div>
+    
+    <div class="stat-box peak">
+        <h4>Periods Shown</h4>
+        <div class="value">{{ report_data | length }}</div>
+        <div style="font-size: 12px; opacity: 0.9;">Data points</div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Data Table -->
+<div class="panel">
+    <h2>📋 Detailed Breakdown</h2>
+    
+    {% if report_data %}
+        <div class="table-container">
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th>
+                            {% if period == 'weekly' %}
+                                Week
+                            {% elif period == 'annually' %}
+                                Year
+                            {% else %}
+                                Month
+                            {% endif %}
+                        </th>
+                        <th>Total Cases</th>
+                        <th>Percentage</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% set total_all = report_data | map(attribute=1) | sum %}
+                    {% for row in report_data %}
+                    <tr>
+                        <td>
+                            <span class="period-badge">{{ row[0] }}</span>
+                        </td>
+                        <td>
+                            <span class="cases-count">{{ row[1] }} cases</span>
+                        </td>
+                        <td>
+                            {% if total_all > 0 %}
+                                {% set pct = (row[1] / total_all * 100) | round(1) %}
+                                {{ pct }}%
+                            {% else %}
+                                0%
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if row[1] > 0 %}
+                                <span style="color: #28a745; font-weight: 600;">✓ Active</span>
+                            {% else %}
+                                <span style="color: #999;">— No Data</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <p>📭 No data available for this period</p>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Chart Visualization -->
+{% if report_data %}
+<div class="panel">
+    <h2>
+        {% if period == 'weekly' %}
+            📈 Weekly Trend Analysis
+        {% elif period == 'annually' %}
+            📈 Annual Trend Analysis
+        {% else %}
+            📊 Monthly Trend Analysis
+        {% endif %}
+    </h2>
+    
+    <div class="chart-container">
+        <canvas id="reportChart"></canvas>
+    </div>
+    
+    <div style="font-size: 13px; color: #666; margin-top: 15px;">
+        <strong>Period:</strong> {{ period | capitalize }} | 
+        <strong>Format:</strong> {% if period == 'weekly' %}ISO Week Number{% elif period == 'annually' %}YYYY{% else %}YYYY-MM{% endif %}
+    </div>
+</div>
+
+<div class="export-section">
+    <button class="btn-export" onclick="downloadTableAsCSV('report-data.csv')">
+        📥 Download as CSV
+    </button>
+    <button class="btn-export" onclick="window.print()">
+        🖨️ Print Report
+    </button>
+</div>
+{% endif %}
+
+<script type="application/json" id="report-labels">{{ report_data | map(attribute=0) | list | tojson }}</script>
+<script type="application/json" id="report-values">{{ report_data | map(attribute=1) | list | tojson }}</script>
+<script type="application/json" id="report-period">{{ period | tojson }}</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script>
+    var reportLabels = JSON.parse(document.getElementById('report-labels').textContent);
+    var reportValues = JSON.parse(document.getElementById('report-values').textContent);
+    var reportPeriod = JSON.parse(document.getElementById('report-period').textContent);
+
+    var periodLabel = reportPeriod === 'weekly' ? 'Cases per Week' : (reportPeriod === 'annually' ? 'Cases per Year' : 'Cases per Month');
+
+    var ctx = document.getElementById('reportChart');
+    if (ctx && reportLabels.length > 0) {
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: reportLabels,
+                datasets: [{
+                    label: periodLabel,
+                    data: reportValues,
+                    backgroundColor: [
+                        '#667eea', '#764ba2', '#f093fb', '#f5576c',
+                        '#4facfe', '#00f2fe', '#43e97b', '#38f9d7',
+                        '#fa709a', '#fee140', '#30cfd0', '#330867'
+                    ],
+                    borderRadius: 6,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        labels: { padding: 15, font: { size: 12 } }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0,0,0,0.8)',
+                        padding: 12,
+                        titleFont: { size: 13 },
+                        bodyFont: { size: 12 },
+                        borderColor: '#ddd',
+                        borderWidth: 1
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1 },
+                        grid: { color: '#f0f0f0' }
+                    },
+                    x: {
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    }
+
+    function downloadTableAsCSV(filename) {
+        let csv = [];
+        let rows = document.querySelectorAll(".report-table tr");
+        
+        for (let i = 0; i < rows.length; i++) {
+            let row = [], cols = rows[i].querySelectorAll("td, th");
+            
+            for (let j = 0; j < cols.length; j++) {
+                row.push(cols[j].innerText);
+            }
+            csv.push(row.join(","));
+        }
+        
+        downloadCSV(csv.join("\n"), filename);
+    }
+    
+    function downloadCSV(csv, filename) {
+        let csvFile;
+        let downloadLink;
+        
+        csvFile = new Blob([csv], {type: "text/csv"});
+        downloadLink = document.createElement("a");
+        downloadLink.setAttribute("href", URL.createObjectURL(csvFile));
+        downloadLink.setAttribute("download", filename);
+        downloadLink.click();
+    }
+</script>
+{% endblock %}
