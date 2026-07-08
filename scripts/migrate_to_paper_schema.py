@@ -12,11 +12,13 @@ Changes:
 
 Run once: python migrate_to_paper_schema.py
 """
+
 import os
 import sys
+
 # Force UTF-8 output on Windows
-if sys.stdout.encoding != 'utf-8':
-    sys.stdout.reconfigure(encoding='utf-8')
+if sys.stdout.encoding != "utf-8":
+    sys.stdout.reconfigure(encoding="utf-8")
 
 from dotenv import load_dotenv
 import MySQLdb
@@ -28,9 +30,10 @@ conn = MySQLdb.connect(
     user=os.getenv("MYSQL_USER", "root"),
     password=os.getenv("MYSQL_PASSWORD", ""),
     db=os.getenv("MYSQL_DB", "carnapping_db"),
-    autocommit=False
+    autocommit=False,
 )
 cur = conn.cursor()
+
 
 def run(sql, desc=""):
     try:
@@ -46,8 +49,10 @@ def run(sql, desc=""):
     except Exception as e:
         print(f"  [ERR] UNEXPECTED: {e}")
 
+
 print("\n--- STEP 1: Create 'complainants' table ---")
-run("""
+run(
+    """
 CREATE TABLE IF NOT EXISTS complainants (
     Complainant_ID INT AUTO_INCREMENT PRIMARY KEY,
     First_Name VARCHAR(100) NOT NULL,
@@ -55,14 +60,18 @@ CREATE TABLE IF NOT EXISTS complainants (
     Contact_Number VARCHAR(30),
     Address VARCHAR(255)
 )
-""", "Create complainants table")
+""",
+    "Create complainants table",
+)
 
 print("\n--- STEP 2: Populate complainants from existing cases ---")
 try:
     cur.execute("SELECT COUNT(*) FROM complainants")
     existing_count = cur.fetchone()[0]
 
-    cur.execute("SELECT id, complainant_name, complainant_email, complainant_contact FROM cases")
+    cur.execute(
+        "SELECT id, complainant_name, complainant_email, complainant_contact FROM cases"
+    )
     case_rows = cur.fetchall()
 
     if existing_count == 0 and case_rows:
@@ -72,7 +81,7 @@ try:
             last = parts[1] if len(parts) > 1 else ""
             cur.execute(
                 "INSERT INTO complainants (First_Name, Last_Name, Contact_Number, Address) VALUES (%s, %s, %s, %s)",
-                (first, last, contact, None)
+                (first, last, contact, None),
             )
         print(f"  [OK] Inserted {len(case_rows)} complainant records")
     else:
@@ -81,9 +90,18 @@ except Exception as e:
     print(f"  [ERR] {e}")
 
 print("\n--- STEP 3: Add Complainant_ID FK + extra columns to cases ---")
-run("ALTER TABLE cases ADD COLUMN Complainant_ID INT NULL", "Add Complainant_ID column to cases")
-run("ALTER TABLE cases ADD COLUMN Case_Title VARCHAR(255)", "Add Case_Title column to cases")
-run("ALTER TABLE cases ADD COLUMN Priority ENUM('Low','Normal','High') DEFAULT 'Normal'", "Add Priority column to cases")
+run(
+    "ALTER TABLE cases ADD COLUMN Complainant_ID INT NULL",
+    "Add Complainant_ID column to cases",
+)
+run(
+    "ALTER TABLE cases ADD COLUMN Case_Title VARCHAR(255)",
+    "Add Case_Title column to cases",
+)
+run(
+    "ALTER TABLE cases ADD COLUMN Priority ENUM('Low','Normal','High') DEFAULT 'Normal'",
+    "Add Priority column to cases",
+)
 
 try:
     cur.execute("SELECT id FROM cases ORDER BY id ASC")
@@ -92,18 +110,21 @@ try:
     comp_ids = [r[0] for r in cur.fetchall()]
 
     for case_id, comp_id in zip(case_ids, comp_ids):
-        cur.execute("UPDATE cases SET Complainant_ID=%s WHERE id=%s", (comp_id, case_id))
+        cur.execute(
+            "UPDATE cases SET Complainant_ID=%s WHERE id=%s", (comp_id, case_id)
+        )
     print(f"  [OK] Mapped {len(case_ids)} cases to complainants")
 except Exception as e:
     print(f"  [ERR] {e}")
 
 run(
     "ALTER TABLE cases ADD CONSTRAINT fk_case_complainant FOREIGN KEY (Complainant_ID) REFERENCES complainants(Complainant_ID) ON DELETE RESTRICT",
-    "Add FK: cases.Complainant_ID -> complainants"
+    "Add FK: cases.Complainant_ID -> complainants",
 )
 
 print("\n--- STEP 4: Create 'receipts' table ---")
-run("""
+run(
+    """
 CREATE TABLE IF NOT EXISTS receipts (
     Receipt_ID INT AUTO_INCREMENT PRIMARY KEY,
     Receipt_Code VARCHAR(50),
@@ -114,7 +135,9 @@ CREATE TABLE IF NOT EXISTS receipts (
     qr_path VARCHAR(255),
     FOREIGN KEY (Case_ID) REFERENCES cases(id) ON DELETE CASCADE
 )
-""", "Create receipts table")
+""",
+    "Create receipts table",
+)
 
 try:
     cur.execute("SELECT COUNT(*) FROM receipts")
@@ -125,7 +148,9 @@ try:
             SELECT NULL, created_at, emailed_to, case_id, pdf_path, qr_path
             FROM report_exports
         """)
-        print(f"  [OK] Migrated data from report_exports -> receipts ({cur.rowcount} rows)")
+        print(
+            f"  [OK] Migrated data from report_exports -> receipts ({cur.rowcount} rows)"
+        )
     else:
         print(f"  [SKIP] receipts already has {r_count} records")
 except MySQLdb.ProgrammingError as e:
@@ -137,7 +162,8 @@ except Exception as e:
     print(f"  [ERR] {e}")
 
 print("\n--- STEP 5: Create 'hotspot' table ---")
-run("""
+run(
+    """
 CREATE TABLE IF NOT EXISTS hotspot (
     Hotspot_ID INT AUTO_INCREMENT PRIMARY KEY,
     barangay_name VARCHAR(100) NOT NULL,
@@ -147,7 +173,9 @@ CREATE TABLE IF NOT EXISTS hotspot (
     total_cases INT DEFAULT 0,
     last_generated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 )
-""", "Create hotspot table")
+""",
+    "Create hotspot table",
+)
 
 print("\n--- STEP 6: Commit all changes ---")
 try:

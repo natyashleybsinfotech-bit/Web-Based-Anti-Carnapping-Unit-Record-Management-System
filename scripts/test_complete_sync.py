@@ -16,9 +16,9 @@ print("=" * 80 + "\n")
 
 from supabase import create_client
 
-supabase_url = os.getenv('SUPABASE_URL')
-supabase_key = os.getenv('SUPABASE_ANON_KEY')
-supabase_service_key = os.getenv('SUPABASE_SERVICE_KEY')
+supabase_url = os.getenv("SUPABASE_URL")
+supabase_key = os.getenv("SUPABASE_ANON_KEY")
+supabase_service_key = os.getenv("SUPABASE_SERVICE_KEY")
 
 client = create_client(supabase_url, supabase_key)
 
@@ -26,44 +26,74 @@ print("[1] SUPABASE SYNC STATUS")
 print("-" * 80)
 
 tables_to_check = {
-    'users': ['id', 'full_name', 'username', 'role', 'email', 'is_active', 'force_password_change', 'created_at'],
-    'cases': ['id', 'reference_no', 'complainant_name', 'status', 'assigned_officer_id', 'created_by', 'created_at'],
-    'activity_logs': ['id', 'user_id', 'action', 'description', 'created_at'],
-    'report_exports': ['id', 'case_id', 'pdf_path', 'qr_path', 'emailed_to', 'created_at']
+    "users": [
+        "id",
+        "full_name",
+        "username",
+        "role",
+        "email",
+        "is_active",
+        "force_password_change",
+        "created_at",
+    ],
+    "cases": [
+        "id",
+        "reference_no",
+        "complainant_name",
+        "status",
+        "assigned_officer_id",
+        "created_by",
+        "created_at",
+    ],
+    "activity_logs": ["id", "user_id", "action", "description", "created_at"],
+    "report_exports": [
+        "id",
+        "case_id",
+        "pdf_path",
+        "qr_path",
+        "emailed_to",
+        "created_at",
+    ],
 }
 
 sync_status = {}
 
 for table, expected_columns in tables_to_check.items():
     try:
-        response = client.table(table).select('*').limit(1).execute()
-        
+        response = client.table(table).select("*").limit(1).execute()
+
         if response.data:
             record = response.data[0]
             existing_columns = list(record.keys())
-            count_response = client.table(table).select('count', count='exact').execute()
-            record_count = count_response.count if hasattr(count_response, 'count') else len(response.data)
-            
+            count_response = (
+                client.table(table).select("count", count="exact").execute()
+            )
+            record_count = (
+                count_response.count
+                if hasattr(count_response, "count")
+                else len(response.data)
+            )
+
             sync_status[table] = {
-                'status': 'OK',
-                'records': record_count,
-                'columns': existing_columns
+                "status": "OK",
+                "records": record_count,
+                "columns": existing_columns,
             }
             print(f"\n{table}:")
             print(f"  Records: {record_count}")
             print(f"  Columns: {len(existing_columns)} found")
-            
+
             # Check for missing columns
             missing = set(expected_columns) - set(existing_columns)
             if missing:
                 print(f"  Missing columns: {', '.join(missing)}")
-            
+
         else:
-            sync_status[table] = {'status': 'EMPTY', 'records': 0}
+            sync_status[table] = {"status": "EMPTY", "records": 0}
             print(f"\n{table}: [EMPTY - No records]")
-            
+
     except Exception as e:
-        sync_status[table] = {'status': 'ERROR', 'error': str(e)[:60]}
+        sync_status[table] = {"status": "ERROR", "error": str(e)[:60]}
         print(f"\n{table}: ERROR - {str(e)[:60]}")
 
 print("\n" + "-" * 80)
@@ -80,7 +110,9 @@ try:
         print(f"  Client Ready: {supabase_sync.is_ready()}")
         print(f"  Sync Enabled: {supabase_sync.sync_enabled}")
         print(f"  Watched Tables: {', '.join(supabase_sync.TABLES)}")
-        print(f"  Service Key: {'SET' if supabase_service_key and 'secret' in supabase_service_key else 'NOT SET'}")
+        print(
+            f"  Service Key: {'SET' if supabase_service_key and 'secret' in supabase_service_key else 'NOT SET'}"
+        )
 except Exception as e:
     print(f"  Error: {e}")
 
@@ -117,7 +149,7 @@ print("\n" + "=" * 80)
 print(" SUMMARY")
 print("=" * 80)
 
-all_ok = all(v.get('status') == 'OK' for v in sync_status.values())
+all_ok = all(v.get("status") == "OK" for v in sync_status.values())
 
 if all_ok:
     print("\nSUCCESS - All tables accessible and synced in Supabase!")
@@ -129,7 +161,9 @@ if all_ok:
 else:
     print("\nWARNING - Some tables have issues:")
     for table, status in sync_status.items():
-        if status.get('status') != 'OK':
-            print(f"  • {table}: {status.get('status')} - {status.get('error', status.get('records', 0))} records")
+        if status.get("status") != "OK":
+            print(
+                f"  • {table}: {status.get('status')} - {status.get('error', status.get('records', 0))} records"
+            )
 
 print("\n" + "=" * 80 + "\n")

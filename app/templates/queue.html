@@ -76,7 +76,7 @@
             </thead>
             <tbody id="pending-table">
                 {% for row in queue_rows %}
-                    {% if row[3] == 'Pending' %}
+                    {% if row[3] in ['Pending','Unsolved'] %}
                     <tr>
                         <td><strong>{{ row[1] }}</strong></td>
                         <td>{{ row[2] }}</td>
@@ -110,7 +110,7 @@
             </thead>
             <tbody id="ongoing-table">
                 {% for row in queue_rows %}
-                    {% if row[3] == 'Ongoing' %}
+                    {% if row[3] in ['Ongoing','Solved'] %}
                     <tr>
                         <td><strong>{{ row[1] }}</strong></td>
                         <td>{{ row[2] }}</td>
@@ -144,7 +144,7 @@
             </thead>
             <tbody id="closed-table">
                 {% for row in queue_rows %}
-                    {% if row[3] == 'Closed' %}
+                    {% if row[3] in ['Closed','Cleared'] %}
                     <tr>
                         <td><strong>{{ row[1] }}</strong></td>
                         <td>{{ row[2] }}</td>

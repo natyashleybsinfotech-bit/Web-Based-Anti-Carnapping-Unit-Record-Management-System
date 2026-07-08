@@ -22,14 +22,24 @@ print("=" * 70)
 print("\n[TEST 1] Environment Variables")
 print("-" * 70)
 
-supabase_url = os.getenv('SUPABASE_URL')
-supabase_anon_key = os.getenv('SUPABASE_ANON_KEY')
-supabase_service_key = os.getenv('SUPABASE_SERVICE_KEY')
-sync_enabled = os.getenv('SUPABASE_SYNC_ENABLED', 'False') == 'True'
+supabase_url = os.getenv("SUPABASE_URL")
+supabase_anon_key = os.getenv("SUPABASE_ANON_KEY")
+supabase_service_key = os.getenv("SUPABASE_SERVICE_KEY")
+sync_enabled = os.getenv("SUPABASE_SYNC_ENABLED", "False") == "True"
 
-print(f"✓ SUPABASE_URL: {supabase_url[:50]}..." if supabase_url else "✗ SUPABASE_URL: NOT SET")
-print(f"✓ SUPABASE_ANON_KEY: {supabase_anon_key[:30]}..." if supabase_anon_key else "✗ SUPABASE_ANON_KEY: NOT SET")
-print(f"✓ SUPABASE_SERVICE_KEY: {'SET' if supabase_service_key and supabase_service_key != 'your_service_key_here' else 'NOT SET OR PLACEHOLDER'}")
+print(
+    f"✓ SUPABASE_URL: {supabase_url[:50]}..."
+    if supabase_url
+    else "✗ SUPABASE_URL: NOT SET"
+)
+print(
+    f"✓ SUPABASE_ANON_KEY: {supabase_anon_key[:30]}..."
+    if supabase_anon_key
+    else "✗ SUPABASE_ANON_KEY: NOT SET"
+)
+print(
+    f"✓ SUPABASE_SERVICE_KEY: {'SET' if supabase_service_key and supabase_service_key != 'your_service_key_here' else 'NOT SET OR PLACEHOLDER'}"
+)
 print(f"✓ SUPABASE_SYNC_ENABLED: {sync_enabled}")
 
 if not all([supabase_url, supabase_anon_key]):
@@ -42,6 +52,7 @@ print("-" * 70)
 
 try:
     from supabase import create_client
+
     supabase = create_client(supabase_url, supabase_anon_key)
     print("✓ Supabase client created successfully")
 except Exception as e:
@@ -52,12 +63,14 @@ except Exception as e:
 print("\n[TEST 3] Checking Supabase Tables")
 print("-" * 70)
 
-tables_to_check = ['users', 'cases', 'activity_logs', 'report_exports']
+tables_to_check = ["users", "cases", "activity_logs", "report_exports"]
 
 for table in tables_to_check:
     try:
-        response = supabase.table(table).select('count', count='exact').execute()
-        count = response.count if hasattr(response, 'count') else len(response.data or [])
+        response = supabase.table(table).select("count", count="exact").execute()
+        count = (
+            response.count if hasattr(response, "count") else len(response.data or [])
+        )
         print(f"✓ {table:20} - {count} records")
     except Exception as e:
         print(f"✗ {table:20} - Error: {str(e)[:50]}")
@@ -68,28 +81,29 @@ print("-" * 70)
 
 try:
     from app.services.supabase_realtime_sync import supabase_sync
-    
+
     if supabase_sync.is_ready():
         print("✓ Supabase Realtime Sync is ready")
-        
+
         # Try to subscribe to a table
         def test_callback(payload):
             print(f"  🔔 Received event: {payload}")
-        
-        channel = supabase_sync.subscribe_to_table_changes('users', test_callback)
+
+        channel = supabase_sync.subscribe_to_table_changes("users", test_callback)
         if channel:
             print("✓ Successfully subscribed to 'users' table")
             time.sleep(1)
-            supabase_sync.unsubscribe_from_table('users')
+            supabase_sync.unsubscribe_from_table("users")
             print("✓ Unsubscribed from 'users' table")
         else:
             print("✗ Failed to subscribe to 'users' table")
     else:
         print("✗ Supabase Realtime Sync not ready")
-        
+
 except Exception as e:
     print(f"✗ Error testing real-time listeners: {e}")
     import traceback
+
     traceback.print_exc()
 
 # Test 5: Test Data Sync Simulation
@@ -98,6 +112,7 @@ print("-" * 70)
 
 try:
     from app.services.cloud_sync_service import sync_all_tables_to_cloud
+
     print("✓ Cloud sync service loaded successfully")
     print("  (Note: Full sync test requires active database connections)")
 except Exception as e:

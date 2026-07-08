@@ -47,4 +47,20 @@
         <a href="{{ url_for('main.queue') }}" class="btn" style="background:#999; color:white;">Back</a>
     </form>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Disable all inputs, textareas, and selects except the status field and assigned officer
+    var formElements = document.querySelectorAll("form input, form textarea, form select");
+    formElements.forEach(function(el) {
+        if (el.name !== "status" && el.name !== "assigned_officer_id" && el.type !== "submit") {
+            el.disabled = true;
+            // Optionally make them look readonly
+            el.style.backgroundColor = "#e9ecef";
+            el.style.color = "#495057";
+        }
+    });
+});
+</script>
+
 {% endblock %}

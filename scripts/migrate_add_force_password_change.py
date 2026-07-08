@@ -3,6 +3,7 @@
 Migration: Add force_password_change column to users table
 This allows tracking which users need to change their password on first login
 """
+
 import os
 from dotenv import load_dotenv
 import MySQLdb
@@ -15,21 +16,21 @@ conn = MySQLdb.connect(
     user=os.getenv("MYSQL_USER", "root"),
     password=os.getenv("MYSQL_PASSWORD", ""),
     autocommit=True,
-    database=os.getenv("MYSQL_DB", "carnapping_db")
+    database=os.getenv("MYSQL_DB", "carnapping_db"),
 )
 
 try:
     cursor = conn.cursor()
-    
+
     print("🔄 Running Migration: Add force_password_change column...")
-    
+
     # Check if column exists
     cursor.execute("""
         SELECT COLUMN_NAME 
         FROM INFORMATION_SCHEMA.COLUMNS 
         WHERE TABLE_NAME='users' AND COLUMN_NAME='force_password_change'
     """)
-    
+
     if cursor.fetchone():
         print("✓ Column 'force_password_change' already exists")
     else:
@@ -40,11 +41,11 @@ try:
             AFTER is_active
         """)
         print("✓ Added column 'force_password_change' to users table")
-    
+
     conn.commit()
     cursor.close()
     print("\n✅ Migration completed successfully!")
-    
+
 except Exception as e:
     print(f"❌ Migration failed: {e}")
 finally:

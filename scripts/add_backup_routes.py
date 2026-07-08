@@ -1,5 +1,5 @@
 # Script to add backup routes to routes.py
-with open('app/routes.py', 'r') as f:
+with open("app/routes.py", "r") as f:
     content = f.read()
 
 # Find the location where we should insert the backup routes
@@ -182,12 +182,15 @@ def delete_backup(backup_name):
 
 # Find and replace the Reports section header to insert backup routes before it
 old_section = '@bp.route("/reports")'
-new_section = backup_routes_code + '\n# =========================\n# Reports\n# =========================\n@bp.route("/reports")'
+new_section = (
+    backup_routes_code
+    + '\n# =========================\n# Reports\n# =========================\n@bp.route("/reports")'
+)
 
 new_content = content.replace(old_section, new_section)
 
 # Write back to the file
-with open('app/routes.py', 'w') as f:
+with open("app/routes.py", "w") as f:
     f.write(new_content)
 
 print("✓ Backup routes added successfully")

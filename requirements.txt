@@ -12,3 +12,5 @@ realtime>=1.0.0
 websockets>=10.3
 tzdata==2026.2
 openpyxl>=3.1.0
+# Firebase Firestore cloud sync (replaces Supabase as primary cloud DB)
+firebase-admin>=6.5.0

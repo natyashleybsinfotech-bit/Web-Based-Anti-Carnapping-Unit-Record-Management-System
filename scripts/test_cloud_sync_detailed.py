@@ -22,6 +22,7 @@ sys.path.insert(0, os.getcwd())
 
 try:
     from app import create_app, mysql
+
     app = create_app()
     app.config["SUPABASE_SYNC_ENABLED"] = True  # Force enable for testing
 except Exception as e:
@@ -31,15 +32,15 @@ except Exception as e:
 with app.app_context():
     print("\n[TEST 1] Database Connection")
     print("-" * 80)
-    
+
     try:
         from app.services.supabase_realtime_sync import supabase_sync
-        
+
         if supabase_sync.client:
             print("✓ Supabase sync client connected")
         else:
             print("✗ Supabase sync client not connected")
-            
+
         if supabase_sync.is_ready():
             print("✓ Supabase realtime sync is READY")
         else:
@@ -47,15 +48,15 @@ with app.app_context():
             print("  Enable it by setting SUPABASE_SYNC_ENABLED=True in .env")
     except Exception as e:
         print(f"❌ Error: {e}")
-    
+
     # Test 2: Test pulling from Supabase
     print("\n[TEST 2] Pull from Supabase (Cloud → Read)")
     print("-" * 80)
-    
+
     try:
         from app.services.supabase_realtime_sync import supabase_sync
-        
-        for table in ['users', 'cases']:
+
+        for table in ["users", "cases"]:
             data = supabase_sync.pull_from_supabase(table)
             if data:
                 print(f"✓ {table:20} - {len(data)} records pulled from Supabase")
@@ -64,60 +65,64 @@ with app.app_context():
     except Exception as e:
         print(f"❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
-    
+
     # Test 3: Test pushing to Supabase
     print("\n[TEST 3] Push to Supabase (Local → Cloud)")
     print("-" * 80)
-    
+
     try:
         from app.services.supabase_realtime_sync import supabase_sync
-        
+
         # Create a test record
         test_record = {
             "id": f"test_{int(time.time())}",
             "name": f"Sync Test {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
-            "sync_test": True
+            "sync_test": True,
         }
-        
+
         print(f"Test record: {json.dumps(test_record, indent=2)}")
-        
+
         # Try to sync it (this will fail if table structure doesn't match)
         # result = supabase_sync.sync_record_to_supabase('users', test_record, 'insert')
         # if result:
         #     print("✓ Successfully pushed test record to Supabase")
         # else:
         #     print("⚠ Failed to push test record (may be due to schema mismatch)")
-        
+
         print("⚠ Test record sync skipped (requires table schema verification)")
     except Exception as e:
         print(f"❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
-    
+
     # Test 4: Check sync queue
     print("\n[TEST 4] Sync Queue Status")
     print("-" * 80)
-    
+
     try:
         from app.services.supabase_realtime_sync import supabase_sync
-        
+
         if supabase_sync.sync_queue:
-            print(f"⚠ {len(supabase_sync.sync_queue)} items in sync queue (pending sync)")
+            print(
+                f"⚠ {len(supabase_sync.sync_queue)} items in sync queue (pending sync)"
+            )
             for i, item in enumerate(supabase_sync.sync_queue[:3], 1):
                 print(f"  {i}. {item['operation'].upper()} on {item['table']}")
         else:
             print("✓ Sync queue is empty (all items synced)")
     except Exception as e:
         print(f"❌ Error: {e}")
-    
+
     # Test 5: Show last sync times
     print("\n[TEST 5] Last Sync Times by Table")
     print("-" * 80)
-    
+
     try:
         from app.services.supabase_realtime_sync import supabase_sync
-        
+
         if supabase_sync.last_sync_times:
             for table, timestamp in supabase_sync.last_sync_times.items():
                 print(f"✓ {table:20} - {timestamp}")
@@ -125,22 +130,23 @@ with app.app_context():
             print("⚠ No sync operations recorded yet")
     except Exception as e:
         print(f"❌ Error: {e}")
-    
+
     # Test 6: Cloud Sync Service Full Check
     print("\n[TEST 6] Full Cloud Sync Service")
     print("-" * 80)
-    
+
     try:
         from app.services.cloud_sync_service import sync_all_tables_to_cloud
-        
+
         print("Testing sync_all_tables_to_cloud()...")
         # result = sync_all_tables_to_cloud(operation="pull")
         # print(f"Result: {json.dumps(result, indent=2)}")
-        
+
         print("⚠ Full sync test skipped (requires active database)")
     except Exception as e:
         print(f"❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
 
 # Final Summary

@@ -1,0 +1,538 @@
+{% extends "base_admin.html" %} {% block title %}Case Records{% endblock %} {% block content %}
+<style>
+  body {
+    background-color: #f5f7fa;
+  }
+
+  .page-header {
+    background: linear-gradient(180deg, #003d7a 0%, #0052a3 100%);
+    margin: -40px -40px 40px -40px;
+    padding: 50px 40px;
+    border-bottom: 5px solid #0066cc;
+    box-shadow: 0 4px 20px rgba(0, 61, 122, 0.15);
+  }
+  .page-header h1 {
+    color: #fff;
+    margin: 0 0 8px;
+    font-size: 26px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .page-header p {
+    color: #e7f0ff;
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  /* Search / filter bar */
+  .filter-bar {
+    background: white;
+    padding: 20px 25px;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 61, 122, 0.1);
+    border-left: 6px solid #0066cc;
+    margin-bottom: 25px;
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+  }
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+    min-width: 180px;
+  }
+  .filter-group label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #003d7a;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .filter-group input,
+  .filter-group select {
+    padding: 10px 14px;
+    border: 2px solid #e7f0ff;
+    border-radius: 4px;
+    font-size: 14px;
+    font-family: inherit;
+    transition: border-color 0.2s;
+    background: #fafbfc;
+  }
+  .filter-group input:focus,
+  .filter-group select:focus {
+    outline: none;
+    border-color: #0066cc;
+    background: white;
+    box-shadow: 0 0 0 4px rgba(0, 102, 204, 0.1);
+  }
+
+  .btn-filter {
+    background: linear-gradient(135deg, #0066cc 0%, #0052a3 100%);
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(0, 102, 204, 0.3);
+    align-self: flex-end;
+    height: 42px;
+  }
+  .btn-filter:hover {
+    background: linear-gradient(135deg, #0052a3 0%, #003d7a 100%);
+    transform: translateY(-1px);
+  }
+  .btn-clear {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-end;
+    height: 42px;
+    transition: background 0.2s;
+  }
+  .btn-clear:hover {
+    background: #5a6268;
+    color: white;
+  }
+
+  /* Summary badges */
+  .summary-bar {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .summary-pill {
+    background: #eff6ff;
+    color: #1e40af;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 700;
+    border: 1px solid #bfdbfe;
+  }
+  .summary-pill.total {
+    background: #f0fdf4;
+    color: #15803d;
+    border-color: #bbf7d0;
+  }
+
+  /* Panel / table */
+  .panel {
+    background: white;
+    padding: 25px;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 61, 122, 0.1);
+    border-left: 6px solid #0066cc;
+  }
+  .panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .panel-head h2 {
+    margin: 0;
+    color: #003d7a;
+    font-size: 18px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .btn-export {
+    background: linear-gradient(135deg, #6f42c1 0%, #9b59b6 100%);
+    color: white;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(111, 66, 193, 0.3);
+    transition: all 0.2s;
+  }
+  .btn-export:hover {
+    background: linear-gradient(135deg, #5a32a3 0%, #7d3c98 100%);
+    transform: translateY(-1px);
+  }
+
+  .cases-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .cases-table th {
+    background-color: #003d7a;
+    color: white;
+    padding: 13px 14px;
+    text-align: left;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.8px;
+    border-bottom: 2px solid #0066cc;
+    white-space: nowrap;
+  }
+  .cases-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #e7f0ff;
+    font-size: 13px;
+    vertical-align: middle;
+  }
+  .cases-table tbody tr {
+    transition: background 0.15s;
+  }
+  .cases-table tbody tr:hover {
+    background: #f0f4f8;
+  }
+  .cases-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .ref-link {
+    font-weight: 700;
+    color: #003d7a;
+    font-family: monospace;
+    font-size: 13px;
+  }
+  .email-cell {
+    color: #64748b;
+    font-size: 12px;
+  }
+  .vehicle-cell {
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .status-badge.pending {
+    background: #fff3cd;
+    color: #856404;
+  }
+  .status-badge.ongoing {
+    background: #cfe2ff;
+    color: #084298;
+  }
+  .status-badge.closed {
+    background: #d1e7dd;
+    color: #0f5132;
+  }
+
+  .btn-sm {
+    padding: 5px 12px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    text-decoration: none;
+    text-transform: uppercase;
+    display: inline-block;
+    transition: all 0.2s;
+  }
+  .btn-edit {
+    background: #0066cc;
+    color: white;
+  }
+  .btn-edit:hover {
+    background: #0052a3;
+    color: white;
+  }
+
+  /* Pagination */
+  .pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 22px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .pager {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .pager a,
+  .pager span {
+    padding: 7px 14px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    border: 1px solid #e0e6ed;
+    transition: all 0.15s;
+  }
+  .pager a {
+    color: #003d7a;
+    background: white;
+  }
+  .pager a:hover {
+    background: #eff6ff;
+    border-color: #0066cc;
+  }
+  .pager span.current {
+    background: #0066cc;
+    color: white;
+    border-color: #0066cc;
+  }
+  .pager span.dots {
+    color: #94a3b8;
+    border-color: transparent;
+    background: none;
+  }
+  .page-info {
+    font-size: 13px;
+    color: #64748b;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 50px 20px;
+    color: #94a3b8;
+  }
+  .empty-state .icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+  }
+  .empty-state p {
+    font-size: 15px;
+  }
+</style>
+
+<div class="page-header">
+  <h1>📁 CASE RECORDS</h1>
+  <p>
+    Centralized view of all carnapping cases — search, filter, and manage
+    records
+  </p>
+</div>
+
+<!-- Search / Filter Bar -->
+<form method="GET" action="{{ url_for('main.case_records') }}" id="filterForm">
+  <div class="filter-bar">
+    <div class="filter-group" style="flex: 2; min-width: 220px">
+      <label>🔍 Search</label>
+      <input
+        type="text"
+        name="search"
+        id="searchInput"
+        value="{{ search }}"
+        placeholder="Reference no., complainant, vehicle, location…"
+      />
+    </div>
+    <div class="filter-group">
+      <label>Status</label>
+      <select name="status" id="statusFilter">
+        <option value="">All Statuses</option>
+        <option value="Unsolved" {% if status_filter == "Unsolved" %}selected{% endif %}>
+          ⏳ Unsolved
+        </option>
+        <option value="Solved" {% if status_filter == "Solved" %}selected{% endif %}>
+          🔍 Solved
+        </option>
+        <option value="Cleared" {% if status_filter == "Cleared" %}selected{% endif %}>
+          ✅ Cleared
+        </option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Barangay No.</label>
+      <input
+        type="number"
+        name="barangay"
+        value="{{ barangay_filter }}"
+        placeholder="e.g. 101"
+        min="1"
+        max="905"
+      />
+    </div>
+    <button type="submit" class="btn-filter">🔎 Filter</button>
+    <a href="{{ url_for('main.case_records') }}" class="btn-clear">✖ Clear</a>
+  </div>
+</form>
+
+<!-- Summary -->
+<div class="summary-bar">
+  <span class="summary-pill total">📊 {{ total }} case{{ 's' if total != 1 else '' }} found</span>
+  {% if search %}<span class="summary-pill">Search: "{{ search }}"</span>{% endif %}
+  {% if status_filter %}<span class="summary-pill">Status: {{ status_filter }}</span>{% endif %}
+  {% if barangay_filter %}<span class="summary-pill">Barangay: {{ barangay_filter }}</span>{% endif %}
+</div>
+
+<!-- Table -->
+<div class="panel">
+  <div class="panel-head">
+    <h2>All Cases</h2>
+    <button class="btn-export" onclick="exportCSV()">📥 Export CSV</button>
+  </div>
+
+  {% if cases %}
+  <table class="cases-table" id="casesTable">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Reference No.</th>
+        <th>Complainant</th>
+        <th>Email</th>
+        <th>Vehicle</th>
+        <th>Status</th>
+        <th>Barangay</th>
+        <th>Incident Date</th>
+        <th>Filed On</th>
+        <th>Assigned Officer</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% set offset = (page - 1) * per_page %} {% for case in cases %}
+      <tr>
+        <td style="color: #94a3b8; font-size: 12px">
+          {{ offset + loop.index }}
+        </td>
+        <td><span class="ref-link">{{ case[1] }}</span></td>
+        <td><strong>{{ case[2] }}</strong></td>
+        <td class="email-cell">{{ case[3] or '—' }}</td>
+        <td class="vehicle-cell" title="{{ case[4] or '' }}">
+          {{ case[4] or '—' }}
+        </td>
+        <td>
+          <span
+            class="status-badge {{ case[5].lower() if case[5] else 'pending' }}"
+          >
+            {{ case[5] or 'Unsolved' }}
+          </span>
+        </td>
+        <td>{% if case[6] %}Brgy. {{ case[6] }}{% else %}—{% endif %}</td>
+        <td>{{ case[7].strftime('%Y-%m-%d') if case[7] else '—' }}</td>
+        <td style="font-size: 12px; color: #64748b">
+          {{ case[8].strftime('%Y-%m-%d') if case[8] else '—' }}
+        </td>
+        <td>{{ case[9] or '—' }}</td>
+        <td>
+          <a
+            href="{{ url_for('main.edit_case', reference_no=case[1]) }}"
+            class="btn-sm btn-edit"
+            >Edit</a
+          >
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- Pagination -->
+  <div class="pagination">
+    <span class="page-info">
+      Showing {{ (page - 1) * per_page + 1 }}–{{ [(page * per_page), total] |
+      min }} of {{ total }} records &nbsp;|&nbsp; Page {{ page }} of {{
+      total_pages }}
+    </span>
+    <div class="pager">
+      {% if page > 1 %}
+      <a
+        href="{{ url_for('main.case_records', page=1, search=search, status=status_filter, barangay=barangay_filter) }}"
+        >«</a
+      >
+      <a
+        href="{{ url_for('main.case_records', page=page-1, search=search, status=status_filter, barangay=barangay_filter) }}"
+        >‹ Prev</a
+      >
+      {% endif %} {% for p in range(1, total_pages + 1) %} {% if p == page %}
+      <span class="current">{{ p }}</span>
+      {% elif p == 1 or p == total_pages or (p >= page - 2 and p <= page + 2) %}
+      <a
+        href="{{ url_for('main.case_records', page=p, search=search, status=status_filter, barangay=barangay_filter) }}"
+        >{{ p }}</a
+      >
+      {% elif p == page - 3 or p == page + 3 %}
+      <span class="dots">…</span>
+      {% endif %} {% endfor %} {% if page < total_pages %}
+      <a
+        href="{{ url_for('main.case_records', page=page+1, search=search, status=status_filter, barangay=barangay_filter) }}"
+        >Next ›</a
+      >
+      <a
+        href="{{ url_for('main.case_records', page=total_pages, search=search, status=status_filter, barangay=barangay_filter) }}"
+        >»</a
+      >
+      {% endif %}
+    </div>
+  </div>
+
+  {% else %}
+  <div class="empty-state">
+    <div class="icon">📭</div>
+    <p>No cases match your search criteria. Try adjusting your filters.</p>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+  // Live search on Enter key
+  document
+    .getElementById("searchInput")
+    .addEventListener("keydown", function (e) {
+      if (e.key === "Enter") document.getElementById("filterForm").submit();
+    });
+
+  // CSV Export
+  function exportCSV() {
+    const table = document.getElementById("casesTable");
+    if (!table) return;
+    let csv = [];
+    // Header
+    const headers = [];
+    table
+      .querySelectorAll("thead th")
+      .forEach((th) => headers.push('"' + th.innerText.trim() + '"'));
+    csv.push(headers.join(","));
+    // Rows
+    table.querySelectorAll("tbody tr").forEach((tr) => {
+      const row = [];
+      tr.querySelectorAll("td").forEach((td) => {
+        let val = td.innerText.trim().replace(/"/g, '""');
+        row.push('"' + val + '"');
+      });
+      csv.push(row.join(","));
+    });
+    const blob = new Blob([csv.join("\n")], { type: "text/csv" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "case_records_page{{ page }}.csv";
+    a.click();
+  }
+</script>
+{% endblock %}

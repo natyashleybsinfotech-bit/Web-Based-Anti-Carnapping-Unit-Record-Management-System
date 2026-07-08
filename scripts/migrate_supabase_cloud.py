@@ -7,6 +7,7 @@ cloud database to match the 6-entity paper schema, then pushes all local data.
 
 Run: python migrate_supabase_cloud.py
 """
+
 import os
 import sys
 import requests
@@ -15,7 +16,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 SUPABASE_URL = os.getenv("SUPABASE_URL", "").rstrip("/")
-SERVICE_KEY  = os.getenv("SUPABASE_SERVICE_KEY", "")
+SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "")
 
 if not SUPABASE_URL or not SERVICE_KEY:
     print("[ERR] SUPABASE_URL and SUPABASE_SERVICE_KEY must be set in .env")
@@ -23,10 +24,10 @@ if not SUPABASE_URL or not SERVICE_KEY:
 
 # ── Headers for Supabase REST / RPC calls ──────────────────────────────────
 HEADERS = {
-    "apikey":        SERVICE_KEY,
+    "apikey": SERVICE_KEY,
     "Authorization": f"Bearer {SERVICE_KEY}",
-    "Content-Type":  "application/json",
-    "Prefer":        "return=minimal"
+    "Content-Type": "application/json",
+    "Prefer": "return=minimal",
 }
 
 
@@ -59,6 +60,7 @@ def table_exists(table_name: str) -> bool:
 def push_local_data():
     """Push local MySQL data to the new Supabase tables."""
     import MySQLdb
+
     conn = MySQLdb.connect(
         host=os.getenv("MYSQL_HOST", "localhost"),
         user=os.getenv("MYSQL_USER", "root"),
@@ -77,18 +79,27 @@ def push_local_data():
         if resp.status_code in (200, 201, 204):
             return len(records)
         else:
-            print(f"    [WARN] Upsert to {table} failed: {resp.status_code} {resp.text[:150]}")
+            print(
+                f"    [WARN] Upsert to {table} failed: {resp.status_code} {resp.text[:150]}"
+            )
             return 0
 
     total = 0
 
     # 1. Push complainants
     print("\n  Pushing complainants...")
-    cur.execute("SELECT Complainant_ID, First_Name, Last_Name, Contact_Number, Address FROM complainants")
+    cur.execute(
+        "SELECT Complainant_ID, First_Name, Last_Name, Contact_Number, Address FROM complainants"
+    )
     rows = cur.fetchall()
     records = [
-        {"Complainant_ID": r[0], "First_Name": r[1], "Last_Name": r[2],
-         "Contact_Number": r[3], "Address": r[4]}
+        {
+            "Complainant_ID": r[0],
+            "First_Name": r[1],
+            "Last_Name": r[2],
+            "Contact_Number": r[3],
+            "Address": r[4],
+        }
         for r in rows
     ]
     n = upsert("complainants", records)
@@ -128,15 +139,16 @@ def push_local_data():
     """)
     rows = cur.fetchall()
     from datetime import datetime
+
     records = [
         {
-            "Receipt_ID":   r[0],
+            "Receipt_ID": r[0],
             "Receipt_Code": r[1],
-            "Date_Issued":  r[2].isoformat() if r[2] else datetime.now().isoformat(),
-            "email_sent":   r[3],
-            "Case_ID":      r[4],
-            "pdf_path":     r[5],
-            "qr_path":      r[6]
+            "Date_Issued": r[2].isoformat() if r[2] else datetime.now().isoformat(),
+            "email_sent": r[3],
+            "Case_ID": r[4],
+            "pdf_path": r[5],
+            "qr_path": r[6],
         }
         for r in rows
     ]
@@ -146,17 +158,19 @@ def push_local_data():
 
     # 4. Push hotspot (likely empty, but push anyway)
     print("\n  Pushing hotspot records...")
-    cur.execute("SELECT Hotspot_ID, barangay_name, period_type, period_start, period_end, total_cases, last_generated FROM hotspot")
+    cur.execute(
+        "SELECT Hotspot_ID, barangay_name, period_type, period_start, period_end, total_cases, last_generated FROM hotspot"
+    )
     rows = cur.fetchall()
     records = [
         {
-            "Hotspot_ID":     r[0],
-            "barangay_name":  r[1],
-            "period_type":    r[2],
-            "period_start":   str(r[3]) if r[3] else None,
-            "period_end":     str(r[4]) if r[4] else None,
-            "total_cases":    r[5],
-            "last_generated": r[6].isoformat() if r[6] else None
+            "Hotspot_ID": r[0],
+            "barangay_name": r[1],
+            "period_type": r[2],
+            "period_start": str(r[3]) if r[3] else None,
+            "period_end": str(r[4]) if r[4] else None,
+            "total_cases": r[5],
+            "last_generated": r[6].isoformat() if r[6] else None,
         }
         for r in rows
     ]
@@ -258,7 +272,9 @@ def main():
 
     # ── Step 1: Check connection ──────────────────────────────
     print("\n[STEP 1] Checking Supabase connection...")
-    r = requests.get(f"{SUPABASE_URL}/rest/v1/users?limit=0", headers=HEADERS, timeout=10)
+    r = requests.get(
+        f"{SUPABASE_URL}/rest/v1/users?limit=0", headers=HEADERS, timeout=10
+    )
     if r.status_code != 200:
         print(f"  [ERR] Cannot reach Supabase: {r.status_code} {r.text[:100]}")
         print("\n  The SQL needs to be run manually. Printing it now...")
@@ -268,7 +284,9 @@ def main():
 
     # ── Step 2: Run DDL via SQL endpoint ─────────────────────
     print("\n[STEP 2] Creating/altering tables via SQL...")
-    success = run_sql(NEW_TABLES_SQL, "Create complainants, receipts, hotspot; alter cases")
+    success = run_sql(
+        NEW_TABLES_SQL, "Create complainants, receipts, hotspot; alter cases"
+    )
 
     if not success:
         print("\n  [WARN] Could not execute SQL automatically.")
@@ -290,12 +308,12 @@ def main():
     # ── Step 4: Verify ────────────────────────────────────────
     print("\n[STEP 4] Verifying tables...")
     tables = {
-        "users":         "User_ID / id",
-        "complainants":  "Complainant_ID",
-        "cases":         "id / Case_ID",
-        "receipts":      "Receipt_ID",
+        "users": "User_ID / id",
+        "complainants": "Complainant_ID",
+        "cases": "id / Case_ID",
+        "receipts": "Receipt_ID",
         "activity_logs": "Log_ID / id",
-        "hotspot":       "Hotspot_ID"
+        "hotspot": "Hotspot_ID",
     }
     all_ok = True
     for tbl, pk_hint in tables.items():

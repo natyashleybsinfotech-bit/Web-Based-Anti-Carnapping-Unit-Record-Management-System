@@ -2,6 +2,7 @@
 """
 Test Cloud Sync with Cloudflare D1
 """
+
 import os
 import requests
 from dotenv import load_dotenv
@@ -29,10 +30,7 @@ if not all([account_id, database_id, api_token]):
 # Test API call
 d1_api_url = f"https://api.cloudflare.com/client/v4/accounts/{account_id}/d1/database/{database_id}/query"
 
-headers = {
-    "Authorization": f"Bearer {api_token}",
-    "Content-Type": "application/json"
-}
+headers = {"Authorization": f"Bearer {api_token}", "Content-Type": "application/json"}
 
 print(f"\n📡 Testing API Endpoint:")
 print(f"  URL: {d1_api_url}")
@@ -41,17 +39,14 @@ print(f"  URL: {d1_api_url}")
 print("\n[TEST 1] Checking database connection...")
 try:
     test_sql = "SELECT COUNT(*) as count FROM cases;"
-    
+
     response = requests.post(
-        d1_api_url,
-        json={"sql": test_sql},
-        headers=headers,
-        timeout=10
+        d1_api_url, json={"sql": test_sql}, headers=headers, timeout=10
     )
-    
+
     print(f"  Status Code: {response.status_code}")
     print(f"  Response: {response.text[:200]}")
-    
+
     if response.status_code == 200:
         result = response.json()
         print(f"  ✅ Database connection successful!")
@@ -62,7 +57,7 @@ try:
             print("     Error: Invalid API token")
         elif response.status_code == 404:
             print("     Error: Invalid Account ID or Database ID")
-        
+
 except requests.exceptions.RequestException as e:
     print(f"  ❌ Network error: {e}")
     exit(1)
@@ -74,23 +69,20 @@ try:
     INSERT INTO cases (reference_no, complainant_name, complainant_email, incident_location, status, created_at) 
     VALUES ('TEST-' || datetime('now'), 'Test Complainant', 'test@email.com', 'Test Location', 'Pending', datetime('now'));
     """
-    
+
     response = requests.post(
-        d1_api_url,
-        json={"sql": test_case_sql},
-        headers=headers,
-        timeout=10
+        d1_api_url, json={"sql": test_case_sql}, headers=headers, timeout=10
     )
-    
+
     print(f"  Status Code: {response.status_code}")
-    
+
     if response.status_code == 200:
         result = response.json()
         print(f"  ✅ Test record inserted successfully!")
         print(f"  Result: {result}")
     else:
         print(f"  ❌ Failed to insert: {response.text[:200]}")
-        
+
 except requests.exceptions.RequestException as e:
     print(f"  ❌ Network error: {e}")
 
@@ -98,14 +90,11 @@ except requests.exceptions.RequestException as e:
 print("\n[TEST 3] Retrieving records from cloud...")
 try:
     retrieve_sql = "SELECT reference_no, complainant_name, status FROM cases ORDER BY created_at DESC LIMIT 5;"
-    
+
     response = requests.post(
-        d1_api_url,
-        json={"sql": retrieve_sql},
-        headers=headers,
-        timeout=10
+        d1_api_url, json={"sql": retrieve_sql}, headers=headers, timeout=10
     )
-    
+
     if response.status_code == 200:
         result = response.json()
         print(f"  ✅ Retrieved records successfully!")
@@ -118,7 +107,7 @@ try:
             print("  No records found in cloud database")
     else:
         print(f"  ❌ Failed to retrieve: {response.text[:200]}")
-        
+
 except requests.exceptions.RequestException as e:
     print(f"  ❌ Network error: {e}")
 

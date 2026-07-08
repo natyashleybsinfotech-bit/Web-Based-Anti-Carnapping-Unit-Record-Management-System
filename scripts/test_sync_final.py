@@ -16,8 +16,8 @@ print("=" * 80 + "\n")
 
 from supabase import create_client
 
-supabase_url = os.getenv('SUPABASE_URL')
-supabase_key = os.getenv('SUPABASE_ANON_KEY')
+supabase_url = os.getenv("SUPABASE_URL")
+supabase_key = os.getenv("SUPABASE_ANON_KEY")
 
 client = create_client(supabase_url, supabase_key)
 
@@ -25,7 +25,7 @@ client = create_client(supabase_url, supabase_key)
 print("[TEST 1] PULL Users from Supabase")
 print("-" * 80)
 try:
-    users = client.table('users').select('*').execute().data
+    users = client.table("users").select("*").execute().data
     print(f"✅ Successfully pulled {len(users)} users")
     for user in users[:2]:
         print(f"   • {user['username']} (ID: {user['id']}, Role: {user['role']})")
@@ -36,7 +36,7 @@ except Exception as e:
 print("\n[TEST 2] PULL Cases from Supabase")
 print("-" * 80)
 try:
-    cases = client.table('cases').select('*').execute().data
+    cases = client.table("cases").select("*").execute().data
     print(f"✅ Successfully pulled {len(cases)} cases")
     for case in cases[:2]:
         print(f"   • Ref: {case['reference_no']}, Status: {case['status']}")
@@ -47,7 +47,14 @@ except Exception as e:
 print("\n[TEST 3] PULL Activity Logs from Supabase")
 print("-" * 80)
 try:
-    logs = client.table('activity_logs').select('*').order('created_at', desc=True).limit(5).execute().data
+    logs = (
+        client.table("activity_logs")
+        .select("*")
+        .order("created_at", desc=True)
+        .limit(5)
+        .execute()
+        .data
+    )
     print(f"✅ Successfully pulled {len(logs)} activity logs")
     for log in logs[:2]:
         print(f"   • Action: {log['action']} (User: {log['user_id']})")
@@ -58,7 +65,7 @@ except Exception as e:
 print("\n[TEST 4] PULL Report Exports from Supabase")
 print("-" * 80)
 try:
-    reports = client.table('report_exports').select('*').execute().data
+    reports = client.table("report_exports").select("*").execute().data
     print(f"✅ Successfully pulled {len(reports)} reports")
     for report in reports[:2]:
         print(f"   • Report ID: {report['id']}, Case: {report['case_id']}")
@@ -71,7 +78,7 @@ print("-" * 80)
 try:
     from app import create_app
     from app.services.supabase_realtime_sync import supabase_sync
-    
+
     app = create_app()
     with app.app_context():
         print(f"✅ Sync Service Status:")

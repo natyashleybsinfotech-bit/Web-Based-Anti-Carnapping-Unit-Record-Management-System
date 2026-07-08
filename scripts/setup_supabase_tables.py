@@ -16,9 +16,9 @@ from supabase import create_client, Client
 
 load_dotenv()
 
-SUPABASE_URL = os.getenv('SUPABASE_URL')
-SUPABASE_ANON_KEY = os.getenv('SUPABASE_ANON_KEY')
-SUPABASE_SERVICE_KEY = os.getenv('SUPABASE_SERVICE_KEY')
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
+SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
 
 if not SUPABASE_URL or not SUPABASE_ANON_KEY:
     print("❌ ERROR: SUPABASE_URL and SUPABASE_ANON_KEY must be set in .env")
@@ -27,21 +27,25 @@ if not SUPABASE_URL or not SUPABASE_ANON_KEY:
 
 def create_supabase_tables():
     """Create all required tables in Supabase PostgreSQL"""
-    
+
     try:
         # Create client - using service key for admin operations if available
-        client: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY or SUPABASE_ANON_KEY)
-        
+        client: Client = create_client(
+            SUPABASE_URL, SUPABASE_SERVICE_KEY or SUPABASE_ANON_KEY
+        )
+
         print("🔄 Connecting to Supabase...")
-        
+
         # Test connection
-        result = client.table('users').select('id', count='exact').limit(1).execute()
+        result = client.table("users").select("id", count="exact").limit(1).execute()
         print("✓ Connected to Supabase!")
         print("✓ Tables appear to exist already")
-        print("\nNote: If tables don't exist, use Supabase Dashboard SQL Editor to run:")
+        print(
+            "\nNote: If tables don't exist, use Supabase Dashboard SQL Editor to run:"
+        )
         print(get_sql_schema())
         return True
-        
+
     except Exception as e:
         if "does not exist" in str(e) or "no relation" in str(e).lower():
             print("\n⚠️  Tables don't exist yet. Creating SQL schema...\n")
@@ -176,23 +180,30 @@ END $$;
 def verify_tables():
     """Verify that all tables exist and are properly configured"""
     try:
-        client: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY or SUPABASE_ANON_KEY)
-        
-        tables = ['users', 'cases', 'activity_logs', 'report_exports']
+        client: Client = create_client(
+            SUPABASE_URL, SUPABASE_SERVICE_KEY or SUPABASE_ANON_KEY
+        )
+
+        tables = ["users", "cases", "activity_logs", "report_exports"]
         print("\n🔍 Verifying tables...")
-        
+
         for table_name in tables:
             try:
-                result = client.table(table_name).select('id', count='exact').limit(1).execute()
+                result = (
+                    client.table(table_name)
+                    .select("id", count="exact")
+                    .limit(1)
+                    .execute()
+                )
                 count = result.count
                 print(f"  ✓ {table_name:<20} - OK (record count: {count})")
             except Exception as e:
                 print(f"  ❌ {table_name:<20} - MISSING")
                 return False
-        
+
         print("\n✓ All tables verified successfully!")
         return True
-        
+
     except Exception as e:
         print(f"❌ Verification error: {e}")
         return False
@@ -204,17 +215,19 @@ def main():
     print("=" * 80)
     print(f"\nSUPABASE_URL: {SUPABASE_URL}")
     print(f"Using: {'Service Key' if SUPABASE_SERVICE_KEY else 'Anon Key'}")
-    
+
     if not create_supabase_tables():
-        print("\n⚠️  Please create the tables using the SQL above, then run this script again.")
+        print(
+            "\n⚠️  Please create the tables using the SQL above, then run this script again."
+        )
         sys.exit(1)
-    
+
     # Verify tables
     if not verify_tables():
         print("\n⚠️  Tables are not configured correctly.")
         print("Please review the SQL schema and try again.")
         sys.exit(1)
-    
+
     print("\n" + "=" * 80)
     print("✓ SETUP COMPLETE!")
     print("=" * 80)

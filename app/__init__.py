@@ -11,7 +11,8 @@ mysql = MySQL()
 mail = Mail()
 
 # Set Philippines timezone globally (UTC+8)
-PH_TIMEZONE = ZoneInfo('Asia/Manila')
+PH_TIMEZONE = ZoneInfo("Asia/Manila")
+
 
 def create_app():
     load_dotenv()
@@ -28,16 +29,26 @@ def create_app():
     app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD", "")
     app.config["BASE_URL"] = os.getenv("BASE_URL", "http://127.0.0.1:5000")
     app.config["TIMEZONE"] = "Asia/Manila"  # Philippines timezone (UTC+8)
-    
-    # Supabase Real-Time Sync configuration
+
+    # Supabase (kept for reference / fallback)
     app.config["SUPABASE_URL"] = os.getenv("SUPABASE_URL", "")
     app.config["SUPABASE_ANON_KEY"] = os.getenv("SUPABASE_ANON_KEY", "")
     app.config["SUPABASE_SERVICE_KEY"] = os.getenv("SUPABASE_SERVICE_KEY", "")
-    app.config["SUPABASE_SYNC_ENABLED"] = os.getenv("SUPABASE_SYNC_ENABLED", "True") == "True"
+    app.config["SUPABASE_SYNC_ENABLED"] = (
+        os.getenv("SUPABASE_SYNC_ENABLED", "False") == "True"
+    )
+
+    # Firebase Firestore (primary cloud DB)
+    app.config["FIREBASE_CREDENTIALS_PATH"] = os.getenv(
+        "FIREBASE_CREDENTIALS_PATH", "firebase-credentials.json"
+    )
+    app.config["FIREBASE_SYNC_ENABLED"] = (
+        os.getenv("FIREBASE_SYNC_ENABLED", "False") == "True"
+    )
 
     mysql.init_app(app)
     mail.init_app(app)
-    
+
     # Set MySQL timezone to Philippines on each request
     @app.before_request
     def set_mysql_timezone():
@@ -51,22 +62,25 @@ def create_app():
             app.logger.debug(f"MySQL timezone note: {e}")
 
     from .routes import bp
+
     app.register_blueprint(bp)
-    
-    # Initialize real-time sync listeners when app starts
+
+    # Initialize Firebase Firestore sync
     with app.app_context():
         try:
-            from .services.supabase_realtime_sync import supabase_sync
-            if supabase_sync and supabase_sync.is_ready():
-                # Set up listeners for all tables
-                supabase_sync.setup_all_listeners(mysql.connection)
-                app.logger.info("✓ Supabase real-time listeners initialized")
-                
-                # Start initial sync from local to cloud
-                from .services.cloud_sync_service import sync_all_tables_to_cloud
-                sync_result = sync_all_tables_to_cloud(operation="push")
-                app.logger.info(f"✓ Initial sync to cloud completed: {sync_result.get('status')}")
+            from .services.firebase_sync import (
+                init_firebase,
+                is_ready as firebase_ready,
+            )
+
+            ok = init_firebase()
+            if ok:
+                app.logger.info("✓ Firebase Firestore sync initialized")
+            else:
+                app.logger.info(
+                    "ℹ Firebase sync not active (disabled or credentials missing)"
+                )
         except Exception as e:
-            app.logger.warning(f"Real-time sync initialization warning: {e}")
-    
+            app.logger.warning(f"Firebase init warning: {e}")
+
     return app

@@ -1,10 +1,12 @@
 # Python script to add cloud sync routes
-with open('app/routes.py', 'r') as f:
+with open("app/routes.py", "r") as f:
     content = f.read()
 
 # Find the location where we should insert the cloud sync routes
 # Insert before the Activity Log section
-insert_marker = '# =========================\n# Activity Log\n# ========================='
+insert_marker = (
+    "# =========================\n# Activity Log\n# ========================="
+)
 insert_pos = content.find(insert_marker)
 
 if insert_pos == -1:
@@ -84,10 +86,15 @@ def cloud_sync_status():
 # ========================='''
 
 # Insert the cloud sync routes before the Activity Log section
-new_content = content[:insert_pos] + cloud_sync_routes_code + '\n' + content[insert_pos + len(insert_marker):]
+new_content = (
+    content[:insert_pos]
+    + cloud_sync_routes_code
+    + "\n"
+    + content[insert_pos + len(insert_marker) :]
+)
 
 # Write back to the file
-with open('app/routes.py', 'w') as f:
+with open("app/routes.py", "w") as f:
     f.write(new_content)
 
 print("✓ Cloud sync routes added successfully")
