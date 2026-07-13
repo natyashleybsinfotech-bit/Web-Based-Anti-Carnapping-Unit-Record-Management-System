@@ -15,11 +15,54 @@
         <label>Complainant Contact</label>
         <input type="text" name="complainant_contact" value="{{ case.complainant_contact }}">
 
+        <label>Complainant Address</label>
+        <input type="text" name="complainant_address" value="{{ case.complainant_address }}">
+
         <label>Incident Date</label>
         <input type="date" name="incident_date" value="{{ case.incident_date }}" required>
 
         <label>Incident Location</label>
         <input type="text" name="incident_location" value="{{ case.incident_location }}" required>
+
+        <label>Place of Occurrence</label>
+        <input type="text" name="place_of_occurrence" value="{{ case.place_of_occurrence }}">
+
+        <label>Station Concerned</label>
+        <select name="station_concern_id">
+            {% if stations %}
+                {% for station in stations %}
+                    <option value="{{ station.id }}" {% if station.id == case.station_concern_id %}selected{% endif %}>
+                        {{ station.station_number }}. {{ station.station_name }} — {{ station.location }}
+                    </option>
+                {% endfor %}
+            {% else %}
+                <option value="1" {% if case.station_concern_id == 1 %}selected{% endif %}>1. Balut / Raxabago Police Station — Balut, Tondo</option>
+                <option value="2" {% if case.station_concern_id == 2 %}selected{% endif %}>2. Moriones Police Station — Moriones, Tondo</option>
+                <option value="3" {% if case.station_concern_id == 3 %}selected{% endif %}>3. Sta. Cruz Police Station — Sta. Cruz, Manila</option>
+                <option value="4" {% if case.station_concern_id == 4 %}selected{% endif %}>4. Sampaloc Police Station — Sampaloc, Manila</option>
+                <option value="5" {% if case.station_concern_id == 5 %}selected{% endif %}>5. Ermita Police Station — Ermita, Manila</option>
+                <option value="6" {% if case.station_concern_id == 6 %}selected{% endif %}>6. Sta. Ana Police Station — Sta. Ana, Manila</option>
+                <option value="7" {% if case.station_concern_id == 7 %}selected{% endif %}>7. Jose Abad Santos Police Station — Jose Abad Santos, Manila</option>
+                <option value="8" {% if case.station_concern_id == 8 %}selected{% endif %}>8. Sta. Mesa Police Station — Sta. Mesa, Manila</option>
+                <option value="9" {% if case.station_concern_id == 9 %}selected{% endif %}>9. Malate Police Station — Malate, Manila</option>
+                <option value="10" {% if case.station_concern_id == 10 %}selected{% endif %}>10. Pandacan Police Station — Pandacan, Manila</option>
+                <option value="11" {% if case.station_concern_id == 11 %}selected{% endif %}>11. Meisic Police Station — Meisic St., Binondo, Manila</option>
+                <option value="12" {% if case.station_concern_id == 12 %}selected{% endif %}>12. Delpan Police Station — Delpan, Tondo, Manila</option>
+                <option value="13" {% if case.station_concern_id == 13 %}selected{% endif %}>13. BASECO Police Station — BASECO, Port Area, Manila</option>
+            {% endif %}
+        </select>
+
+        <label>Blotter Entry Number</label>
+        <input type="text" name="blotter_entry_no" value="{{ case.blotter_entry_no }}">
+
+        <label>Vehicle Type</label>
+        <input type="text" name="vehicle_type" value="{{ case.vehicle_type }}">
+
+        <label>Investigator on Case (IOC)</label>
+        <input type="text" name="ioc" value="{{ case.ioc }}">
+
+        <label>Suspect Details</label>
+        <textarea name="suspect_details">{{ case.suspect_details }}</textarea>
 
         <label>Vehicle Details</label>
         <input type="text" name="vehicle_details" value="{{ case.vehicle_details }}">
@@ -29,9 +72,9 @@
 
         <label>Status</label>
         <select name="status" required>
-            <option value="Pending" {% if case.status == 'Pending' %}selected{% endif %}>Pending</option>
-            <option value="Ongoing" {% if case.status == 'Ongoing' %}selected{% endif %}>Ongoing</option>
-            <option value="Closed" {% if case.status == 'Closed' %}selected{% endif %}>Closed</option>
+            <option value="Unsolved" {% if case.status == 'Unsolved' %}selected{% endif %}>Unsolved</option>
+            <option value="Solved" {% if case.status == 'Solved' %}selected{% endif %}>Solved</option>
+            <option value="Cleared" {% if case.status == 'Cleared' %}selected{% endif %}>Cleared</option>
         </select>
 
         <label>Assigned Officer</label>

@@ -20,16 +20,25 @@
         .layout {
             display: flex;
             min-height: 100vh;
+            align-items: flex-start;
         }
 
         /* Sidebar */
         .sidebar {
             width: 260px;
+            min-width: 260px;
+            flex-shrink: 0;
             background: #0f172a;
             color: white;
-            padding: 0;
+            padding: 20px 0 0;
             display: flex;
             flex-direction: column;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            overflow-y: auto;
+            z-index: 10;
         }
 
         .sidebar-header {
@@ -96,6 +105,13 @@
             color: white;
         }
 
+        .sidebar-menu li a.active,
+        .sidebar-menu li a.active:hover {
+            background: #1b2a49;
+            color: #e2e8f0;
+            font-weight: 700;
+        }
+
         .logout-link {
             background: #991b1b;
             color: white !important;
@@ -110,7 +126,10 @@
         /* Main */
         .main {
             flex: 1;
+            min-width: 0;
             padding: 30px;
+            overflow-x: auto;
+            margin-left: 260px;
         }
 
         .topbar {
@@ -254,10 +273,14 @@
             }
 
             .sidebar {
+                position: relative;
                 width: 100%;
+                min-width: 100%;
+                height: auto;
             }
 
             .main {
+                margin-left: 0;
                 padding: 20px;
             }
         }
@@ -266,56 +289,10 @@
 <body>
 
 <div class="layout">
-    <!-- Sidebar -->
-    <aside class="sidebar">
-        <div class="sidebar-header">
-            <img src="{{ url_for('static', filename='images/pnpseal.png') }}" alt="PNP Logo" class="sidebar-logo">
-            <h2>Anti-Carnapping Unit - MPD</h2>
-            <p class="sidebar-subtitle">Carnapping Records Management and Processing</p>
-        </div>
-
-        <div class="user-box">
-            <strong>{{ session.get("full_name", "User") }}</strong>
-            {{ session.get("role", "guest")|capitalize }}
-        </div>
-
-        <ul class="sidebar-menu">
-            <!-- DASHBOARD -->
-            {% if session.get("role") == "admin" %}
-                <li><a href="{{ url_for('main.admin_dashboard') }}">Dashboard</a></li>
-            {% elif session.get("role") == "officer" %}
-                <li><a href="{{ url_for('main.officer_dashboard') }}">Dashboard</a></li>
-            {% endif %}
-
-            <!-- ADMIN ONLY -->
-            {% if session.get("role") == "admin" %}
-                <li><a href="{{ url_for('main.manage_users') }}">Manage Users</a></li>
-            {% endif %}
-
-            <!-- SHARED -->
-            <li><a href="{{ url_for('main.new_case') }}">Process Case</a></li>
-            <li><a href="{{ url_for('main.queue') }}">Queue</a></li>
-            <li><a href="{{ url_for('main.case_records') }}">Case Records</a></li>
-            <li><a href="{{ url_for('main.reports') }}">Reports</a></li>
-
-            <!-- ADMIN ONLY -->
-            {% if session.get("role") == "admin" %}
-                <li><a href="{{ url_for('main.activity_log') }}">Activity Log</a></li>
-                <li><a href="{{ url_for('main.hotspots_map') }}">🗺️ Hotspots Map</a></li>
-                <li><a href="{{ url_for('main.manage_backups') }}">💾 Database Backups</a></li>
-            {% endif %}
-
-            <li><a href="{{ url_for('main.logout') }}" class="logout-link">Logout</a></li>
-        </ul>
-    </aside>
+    {% include 'sidebar.html' %}
 
     <!-- Main Content -->
     <main class="main">
-        <div class="topbar">
-            <h1>{% block page_title %}System Dashboard{% endblock %}</h1>
-            <p>Welcome to the Carnapping Case Management System</p>
-        </div>
-
         {% with messages = get_flashed_messages() %}
             {% if messages %}
                 {% for msg in messages %}
@@ -330,6 +307,7 @@
 
 <!-- Bootstrap JS -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+{% block scripts %}{% endblock %}
 
 </body>
 </html>

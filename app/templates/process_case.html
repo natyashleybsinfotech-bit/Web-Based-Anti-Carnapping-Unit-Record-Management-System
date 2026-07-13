@@ -12,18 +12,21 @@
     body { background-color: #f5f7fa; }
     .form-header {
         background: linear-gradient(180deg, #003d7a 0%, #0052a3 100%);
-        margin: -40px -40px 40px -40px;
-        padding: 50px 40px;
+        margin: 0 0 40px 0;
+        padding: 45px 40px;
         border-radius: 0;
-        position: relative;
-        overflow: hidden;
         border-bottom: 5px solid #0066cc;
         box-shadow: 0 4px 20px rgba(0, 61, 122, 0.15);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        min-height: 160px;
     }
     
     .form-header h1 {
         color: white;
-        margin: 0 0 8px 0;
+        margin: 0;
         font-size: 26px;
         font-weight: 500;
         letter-spacing: 0.5px;
@@ -31,10 +34,7 @@
     }
     
     .form-header p {
-        color: #e7f0ff;
-        margin: 0;
-        font-size: 15px;
-        font-weight: 600;
+        display: none;
     }
     
     .form-container {
@@ -261,7 +261,7 @@
         <div class="form-section">
             <h3>Incident Details</h3>
             
-            <div class="form-row">
+            <div class="form-row three-col">
                 <div class="form-group">
                     <label>Date of Incident <span class="required">*</span></label>
                     <input type="date" name="incident_date" required>
@@ -269,6 +269,70 @@
                 <div class="form-group">
                     <label>Time of Incident</label>
                     <input type="time" name="incident_time" placeholder="HH:MM">
+                </div>
+                <div class="form-group">
+                    <label>Place of Occurrence Type</label>
+                    <select name="place_of_occurrence">
+                        <option value="">-- Select Place Type --</option>
+                        <option value="Street">Street</option>
+                        <option value="Residential">Residential</option>
+                        <option value="Commercial">Commercial</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row three-col">
+                <div class="form-group">
+                    <label>Station Concerned</label>
+                    <select name="station_concern_id" required>
+                        <option value="">-- Select MPD Station --</option>
+                        {% if stations %}
+                            {% for station in stations %}
+                            <option value="{{ station.id }}">
+                                {{ station.station_number }}. {{ station.station_name }} — {{ station.location }}
+                            </option>
+                            {% endfor %}
+                        {% else %}
+                            <option value="1">1. Balut / Raxabago Police Station — Balut, Tondo</option>
+                            <option value="2">2. Moriones Police Station — Moriones, Tondo</option>
+                            <option value="3">3. Sta. Cruz Police Station — Sta. Cruz, Manila</option>
+                            <option value="4">4. Sampaloc Police Station — Sampaloc, Manila</option>
+                            <option value="5">5. Ermita Police Station — Ermita, Manila</option>
+                            <option value="6">6. Sta. Ana Police Station — Sta. Ana, Manila</option>
+                            <option value="7">7. Jose Abad Santos Police Station — Jose Abad Santos, Manila</option>
+                            <option value="8">8. Sta. Mesa Police Station — Sta. Mesa, Manila</option>
+                            <option value="9">9. Malate Police Station — Malate, Manila</option>
+                            <option value="10">10. Pandacan Police Station — Pandacan, Manila</option>
+                            <option value="11">11. Meisic Police Station — Meisic St., Binondo, Manila</option>
+                            <option value="12">12. Delpan Police Station — Delpan, Tondo, Manila</option>
+                            <option value="13">13. BASECO Police Station — BASECO, Port Area, Manila</option>
+                        {% endif %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Blotter Entry Number</label>
+                    <input type="text" name="blotter_entry_no" placeholder="Enter blotter reference number">
+                </div>
+                <!-- Case Status removed from incident details; status defaults to 'Unsolved' on submit -->
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Incident Location <span class="required">*</span></label>
+                    <input type="text" name="incident_location" placeholder="Enter specific location/address of incident" required>
+                </div>
+                <div class="form-group">
+                    <label>Barangay Number (1-905) <span class="required">*</span></label>
+                    <select name="barangay_number" id="barangay_select" required>
+                        <option value="">-- Select Barangay --</option>
+                        {% for district in districts %}
+                        <optgroup label="District {{ district.id }}: {{ district.name }} - Barangays {{ district.barangays[0] }}-{{ district.barangays[-1] }}">
+                            {% for barangay in district.barangays %}
+                            <option value="{{ barangay }}">Barangay {{ barangay }}</option>
+                            {% endfor %}
+                        </optgroup>
+                        {% endfor %}
+                    </select>
                 </div>
             </div>
         </div>
@@ -280,6 +344,14 @@
             <div class="vehicle-specs-grid">
                 <div class="form-row three-col">
                     <div class="form-group">
+                        <label>Vehicle Type</label>
+                        <select name="vehicle_type">
+                            <option value="">-- Select Vehicle Type --</option>
+                            <option value="Motor">Motorcycle</option>
+                            <option value="Vehicle">Vehicle</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
                         <label>Vehicle Make <span class="required">*</span></label>
                         <input type="text" name="vehicle_make" placeholder="e.g., Toyota, Honda, BMW" required>
                     </div>
@@ -287,13 +359,13 @@
                         <label>Vehicle Model <span class="required">*</span></label>
                         <input type="text" name="vehicle_model" placeholder="e.g., Camry, Civic, 3 Series" required>
                     </div>
-                    <div class="form-group">
-                        <label>Year/Production Year</label>
-                        <input type="number" name="vehicle_year" placeholder="YYYY" min="1900" max="2099">
-                    </div>
                 </div>
                 
                 <div class="form-row three-col">
+                    <div class="form-group">
+                        <label>Vehicle Year</label>
+                        <input type="number" name="vehicle_year" placeholder="YYYY" min="1900" max="2099">
+                    </div>
                     <div class="form-group">
                         <label>Color <span class="required">*</span></label>
                         <input type="text" name="vehicle_color" placeholder="e.g., Black, Silver, White, Red" required>
@@ -336,27 +408,37 @@
             </div>
         </div>
 
-        <!-- Location Information -->
+        <!-- Suspect Details -->
         <div class="form-section">
-            <h3>Location Information</h3>
-            
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Incident Location <span class="required">*</span></label>
-                    <input type="text" name="incident_location" placeholder="Enter specific location/address of incident" required>
+            <h3>Suspect Details</h3>
+            <div id="suspectContainer">
+                <div class="form-row suspect-row">
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" name="suspect_fullname[]" placeholder="Enter suspect full name">
+                    </div>
+                    <div class="form-group">
+                        <label>Alias</label>
+                        <input type="text" name="suspect_alias[]" placeholder="Enter suspect alias">
+                    </div>
+                    <div class="form-group">
+                        <label>Address <span class="optional">(optional)</span></label>
+                        <input type="text" name="suspect_address[]" placeholder="Enter suspect address (optional)">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Barangay Number (1-905) <span class="required">*</span></label>
-                    <select name="barangay_number" id="barangay_select" required>
-                        <option value="">-- Select Barangay --</option>
-                        {% for district in districts %}
-                        <optgroup label="District {{ district.id }}: {{ district.name }} - Barangays {{ district.barangays[0] }}-{{ district.barangays[-1] }}">
-                            {% for barangay in district.barangays %}
-                            <option value="{{ barangay }}">Barangay {{ barangay }}</option>
-                            {% endfor %}
-                        </optgroup>
-                        {% endfor %}
-                    </select>
+                <div class="form-row suspect-row">
+                    <div class="form-group">
+                        <label>Gang Affiliation</label>
+                        <input type="text" name="suspect_gang[]" placeholder="Enter gang affiliation">
+                    </div>
+                    <div class="form-group full">
+                        <label>Additional Notes</label>
+                        <input type="text" name="suspect_other[]" placeholder="Enter extra suspect details">
+                    </div>
+                    <div class="form-group add-button-group">
+                        <label>&nbsp;</label>
+                        <button type="button" id="addSuspectBtn" class="btn-submit" style="width:100%;">+ Add Suspect</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -383,4 +465,82 @@
     </form>
 </div>
 
+{% endblock %}
+
+{% block scripts %}
+<script>
+// =============================================
+// Add Suspect — dynamic row cloning
+// =============================================
+document.addEventListener('DOMContentLoaded', function() {
+    const addBtn = document.getElementById('addSuspectBtn');
+    if (!addBtn) return;
+
+    let suspectCount = 1;
+
+    addBtn.addEventListener('click', function() {
+        suspectCount++;
+        const container = document.getElementById('suspectContainer');
+
+        const separator = document.createElement('hr');
+        separator.style.cssText = 'border:none; border-top:2px dashed #e0e6ed; margin:18px 0 12px;';
+
+        const label = document.createElement('div');
+        label.style.cssText = 'font-weight:700; color:#003d7a; font-size:13px; margin-bottom:8px; text-transform:uppercase;';
+        label.textContent = 'Suspect #' + suspectCount;
+
+        const row1 = document.createElement('div');
+        row1.className = 'form-row suspect-row';
+        row1.innerHTML = `
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" name="suspect_fullname[]" placeholder="Enter suspect full name">
+            </div>
+            <div class="form-group">
+                <label>Alias</label>
+                <input type="text" name="suspect_alias[]" placeholder="Enter suspect alias">
+            </div>
+            <div class="form-group">
+                <label>Address <span class="optional">(optional)</span></label>
+                <input type="text" name="suspect_address[]" placeholder="Enter suspect address (optional)">
+            </div>
+        `;
+
+        const row2 = document.createElement('div');
+        row2.className = 'form-row suspect-row';
+        row2.innerHTML = `
+            <div class="form-group">
+                <label>Gang Affiliation</label>
+                <input type="text" name="suspect_gang[]" placeholder="Enter gang affiliation">
+            </div>
+            <div class="form-group full">
+                <label>Additional Notes</label>
+                <input type="text" name="suspect_other[]" placeholder="Enter extra suspect details">
+            </div>
+            <div class="form-group" style="display:flex; align-items:flex-end;">
+                <button type="button" class="btn-reset remove-suspect-btn" style="width:100%; padding:12px;">✕ Remove</button>
+            </div>
+        `;
+
+        container.appendChild(separator);
+        container.appendChild(label);
+        container.appendChild(row1);
+        container.appendChild(row2);
+
+        // Remove button handler
+        row2.querySelector('.remove-suspect-btn').addEventListener('click', function() {
+            container.removeChild(separator);
+            container.removeChild(label);
+            container.removeChild(row1);
+            container.removeChild(row2);
+            // Re-number remaining suspects
+            const labels = container.querySelectorAll('div[style*="text-transform:uppercase"]');
+            labels.forEach(function(lbl, idx) {
+                lbl.textContent = 'Suspect #' + (idx + 2);
+            });
+            suspectCount = labels.length + 1;
+        });
+    });
+});
+</script>
 {% endblock %}

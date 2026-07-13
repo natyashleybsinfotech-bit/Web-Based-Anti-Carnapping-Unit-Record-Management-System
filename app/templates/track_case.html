@@ -3,49 +3,219 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Track Case</title>
+    <title>Track Case — PNP Anti-Carnapping Unit</title>
+    <meta name="description" content="Track your case status with the PNP Anti-Carnapping Unit Manila Police District">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
-            font-family: Arial, sans-serif;
-            background: #f4f4f4;
-            padding: 40px;
+            font-family: 'Inter', Arial, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
         }
 
-        .box {
-            max-width: 700px;
-            margin: auto;
+        .track-card {
+            max-width: 520px;
+            width: 100%;
             background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #003d7a 0%, #0052a3 100%);
+            padding: 28px 30px;
+            text-align: center;
+            border-bottom: 4px solid #0066cc;
+        }
+
+        .card-header img {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 10px;
+        }
+
+        .card-header h1 {
+            color: white;
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            margin: 0;
+            text-transform: uppercase;
+        }
+
+        .card-header p {
+            color: rgba(255,255,255,0.7);
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        .card-body {
             padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 3px 12px rgba(0,0,0,0.1);
         }
 
-        h2 {
-            margin-top: 0;
+        .status-banner {
+            text-align: center;
+            margin-bottom: 24px;
         }
 
-        p {
+        .status-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #64748b;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 8px 24px;
+            border-radius: 50px;
+            font-weight: 700;
             font-size: 16px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
         }
 
-        .status {
-            font-weight: bold;
-            color: #c99700;
+        .status-unsolved {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            color: #92400e;
+            border: 2px solid #f59e0b;
+        }
+
+        .status-solved {
+            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+            color: #1d4ed8;
+            border: 2px solid #3b82f6;
+        }
+
+        .status-cleared {
+            background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+            color: #166534;
+            border: 2px solid #22c55e;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 14px 0;
+            border-bottom: 1px solid #f1f5f9;
+            align-items: flex-start;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            flex-shrink: 0;
+        }
+
+        .detail-value {
+            font-size: 14px;
+            font-weight: 500;
+            color: #1e293b;
+            text-align: right;
+            word-break: break-word;
+            max-width: 60%;
+        }
+
+        .ref-badge {
+            background: #eef2ff;
+            color: #4f46e5;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            font-weight: 700;
+            border: 1px solid #c7d2fe;
+        }
+
+        .card-footer {
+            background: #f8fafc;
+            padding: 16px 30px;
+            text-align: center;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .card-footer p {
+            font-size: 11px;
+            color: #94a3b8;
+        }
+
+        .not-found {
+            text-align: center;
+            padding: 40px 30px;
+        }
+
+        .not-found h2 {
+            font-size: 20px;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+
+        .not-found p {
+            color: #64748b;
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
-    <div class="box">
-        <h2>Case Tracking</h2>
+    <div class="track-card">
+        <div class="card-header">
+            <h1>🛡️ Case Tracking</h1>
+            <p>PNP Anti-Carnapping Unit — Manila Police District</p>
+        </div>
 
         {% if case %}
-            <p><strong>Reference No:</strong> {{ case[0] }}</p>
-            <p><strong>Complainant:</strong> {{ case[1] }}</p>
-            <p><strong>Incident Location:</strong> {{ case[2] }}</p>
-            <p><strong>Status:</strong> <span class="status">{{ case[3] }}</span></p>
-            <p><strong>Date Filed:</strong> {{ case[4] }}</p>
+        <div class="card-body">
+            <div class="status-banner">
+                <div class="status-label">Current Case Status</div>
+                {% set status_lower = case[3]|lower %}
+                <span class="status-badge {% if status_lower == 'unsolved' %}status-unsolved{% elif status_lower == 'solved' %}status-solved{% elif status_lower == 'cleared' %}status-cleared{% else %}status-unsolved{% endif %}">
+                    {{ case[3] }}
+                </span>
+            </div>
+
+            <div class="detail-row">
+                <span class="detail-label">Reference No.</span>
+                <span class="detail-value"><span class="ref-badge">{{ case[0] }}</span></span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Complainant</span>
+                <span class="detail-value">{{ case[1] }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Incident Location</span>
+                <span class="detail-value">{{ case[2] }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Date Filed</span>
+                <span class="detail-value">{{ case[4] }}</span>
+            </div>
+        </div>
+
+        <div class="card-footer">
+            <p>For inquiries, contact the Anti-Carnapping Unit at the Manila Police District.</p>
+        </div>
         {% else %}
-            <p>No case found for this reference number.</p>
+        <div class="not-found">
+            <h2>Case Not Found</h2>
+            <p>No case was found for this reference number. Please verify and try again.</p>
+        </div>
         {% endif %}
     </div>
 </body>

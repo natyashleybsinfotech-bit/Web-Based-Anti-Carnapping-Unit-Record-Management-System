@@ -20,9 +20,22 @@ def generate_reference():
 def generate_qr(reference_no):
     qr_dir = Path(current_app.root_path) / "static" / "qr"
     qr_dir.mkdir(parents=True, exist_ok=True)
-    track_url = f"{current_app.config['BASE_URL']}/track/{reference_no}"
+    base_url = current_app.config.get("BASE_URL", "http://127.0.0.1:5000").rstrip("/")
+    track_url = f"{base_url}/track/{reference_no}"
     file_path = qr_dir / f"{reference_no}.png"
-    qrcode.make(track_url).save(file_path)
+
+    # Generate a higher-quality QR code for reliable scanning
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_M,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(track_url)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    img.save(file_path)
+
     return f"qr/{reference_no}.png", track_url
 
 

@@ -97,6 +97,83 @@ def assign_round_robin():
         return None
 
 
+def get_default_police_stations():
+    return [
+        {"station_number": 1, "station_name": "Balut / Raxabago Police Station", "location": "Balut, Tondo"},
+        {"station_number": 2, "station_name": "Moriones Police Station", "location": "Moriones, Tondo"},
+        {"station_number": 3, "station_name": "Sta. Cruz Police Station", "location": "Sta. Cruz, Manila"},
+        {"station_number": 4, "station_name": "Sampaloc Police Station", "location": "Sampaloc, Manila"},
+        {"station_number": 5, "station_name": "Ermita Police Station", "location": "Ermita, Manila"},
+        {"station_number": 6, "station_name": "Sta. Ana Police Station", "location": "Sta. Ana, Manila"},
+        {"station_number": 7, "station_name": "Jose Abad Santos Police Station", "location": "Jose Abad Santos, Manila"},
+        {"station_number": 8, "station_name": "Sta. Mesa Police Station", "location": "Sta. Mesa, Manila"},
+        {"station_number": 9, "station_name": "Malate Police Station", "location": "Malate, Manila"},
+        {"station_number": 10, "station_name": "Pandacan Police Station", "location": "Pandacan, Manila"},
+        {"station_number": 11, "station_name": "Meisic Police Station", "location": "Meisic St., Binondo, Manila"},
+        {"station_number": 12, "station_name": "Delpan Police Station", "location": "Delpan, Tondo, Manila"},
+        {"station_number": 13, "station_name": "BASECO Police Station", "location": "BASECO, Port Area, Manila"},
+    ]
+
+
+def seed_default_police_stations():
+    try:
+        cur = mysql.connection.cursor()
+        # Ensure reference table exists before inserting
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS police_stations (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                station_number INT NOT NULL UNIQUE,
+                station_name VARCHAR(150) NOT NULL,
+                location VARCHAR(255) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+
+        # Ensure cases table has station_concern_id column for older DBs
+        try:
+            cur.execute("SHOW COLUMNS FROM cases LIKE 'station_concern_id'")
+            if not cur.fetchone():
+                try:
+                    cur.execute(
+                        "ALTER TABLE cases ADD COLUMN station_concern_id INT AFTER barangay_number"
+                    )
+                except Exception:
+                    # Some MySQL versions or schemas may not support position; try without AFTER
+                    try:
+                        cur.execute(
+                            "ALTER TABLE cases ADD COLUMN station_concern_id INT"
+                        )
+                    except Exception as _:
+                        pass
+                # Try to add FK constraint; ignore on failure
+                try:
+                    cur.execute(
+                        "ALTER TABLE cases ADD CONSTRAINT fk_case_station_concern FOREIGN KEY (station_concern_id) REFERENCES police_stations(id) ON DELETE SET NULL"
+                    )
+                except Exception:
+                    pass
+        except Exception:
+            # If cases table does not exist or SHOW failed, ignore and continue
+            pass
+
+        for station in get_default_police_stations():
+            try:
+                cur.execute(
+                    "INSERT IGNORE INTO police_stations (station_number, station_name, location) VALUES (%s, %s, %s)",
+                    (station["station_number"], station["station_name"], station["location"]),
+                )
+            except Exception:
+                # Ignore individual insert errors
+                pass
+
+        mysql.connection.commit()
+        cur.close()
+    except Exception as e:
+        print("SEED POLICE STATIONS ERROR:", e)
+
+
 # =========================
 # Home / Auth Routes
 # =========================
@@ -499,19 +576,19 @@ def officer_dashboard():
         stats["my_cases"] = cur.fetchone()[0]
 
         cur.execute(
-            "SELECT COUNT(*) FROM cases WHERE assigned_officer_id=%s AND status='Unsolved'",
+            "SELECT COUNT(*) FROM cases WHERE assigned_officer_id=%s AND status IN ('Pending','Unsolved')",
             (user_id,),
         )
         stats["my_pending"] = cur.fetchone()[0]
 
         cur.execute(
-            "SELECT COUNT(*) FROM cases WHERE assigned_officer_id=%s AND status='Solved'",
+            "SELECT COUNT(*) FROM cases WHERE assigned_officer_id=%s AND status IN ('Ongoing','Solved')",
             (user_id,),
         )
         stats["my_ongoing"] = cur.fetchone()[0]
 
         cur.execute(
-            "SELECT COUNT(*) FROM cases WHERE assigned_officer_id=%s AND status='Cleared'",
+            "SELECT COUNT(*) FROM cases WHERE assigned_officer_id=%s AND status IN ('Closed','Cleared')",
             (user_id,),
         )
         stats["my_closed"] = cur.fetchone()[0]
@@ -586,6 +663,51 @@ def new_case():
             f"Plate: {v_plate} | Chassis: {v_chassis} | Engine: {v_engine} {v_cc}cc"
         ).strip(" |")
 
+        suspect_names = request.form.getlist("suspect_fullname[]")
+        suspect_aliases = request.form.getlist("suspect_alias[]")
+        suspect_gangs = request.form.getlist("suspect_gang[]")
+        suspect_addrs = request.form.getlist("suspect_address[]")
+        suspect_others = request.form.getlist("suspect_other[]")
+
+        suspect_summaries = []
+        for i in range(len(suspect_names)):
+            sname = suspect_names[i].strip()
+            salias = suspect_aliases[i].strip() if i < len(suspect_aliases) else ""
+            saddr = suspect_addrs[i].strip() if i < len(suspect_addrs) else ""
+            sgang = suspect_gangs[i].strip() if i < len(suspect_gangs) else ""
+            sother = suspect_others[i].strip() if i < len(suspect_others) else ""
+            if sname or salias or saddr or sgang or sother:
+                entry = []
+                if sname:
+                    entry.append(f"Name: {sname}")
+                if salias:
+                    entry.append(f"Alias: {salias}")
+                if saddr:
+                    entry.append(f"Address: {saddr}")
+                if sgang:
+                    entry.append(f"Gang: {sgang}")
+                if sother:
+                    entry.append(f"Notes: {sother}")
+                suspect_summaries.append(" | ".join(entry))
+
+        suspect_details_summary = "; ".join(suspect_summaries)
+
+        station_concern_id = request.form.get("station_concern_id") or None
+        station_concern_name = None
+        try:
+            station_concern_id = int(station_concern_id) if station_concern_id else None
+            if station_concern_id:
+                cur = mysql.connection.cursor()
+                cur.execute(
+                    "SELECT station_name FROM police_stations WHERE id=%s",
+                    (station_concern_id,),
+                )
+                station_row = cur.fetchone()
+                cur.close()
+                station_concern_name = station_row[0] if station_row else None
+        except ValueError:
+            station_concern_id = None
+
         data = {
             "reference_no": generate_reference(),
             "complainant_name": request.form["complainant_name"],
@@ -597,13 +719,15 @@ def new_case():
             "incident_location": request.form["incident_location"],
             "place_of_occurrence": request.form.get("place_of_occurrence", None),
             "barangay_number": request.form.get("barangay_number"),
-            "station_concern": request.form.get("station_concern", ""),
+            "station_concern_id": station_concern_id,
+            "station_concern_name": station_concern_name,
             "blotter_entry_no": request.form.get("blotter_entry_no", ""),
             "vehicle_type": v_type or None,
             "vehicle_details": vehicle_details,
             "narrative": request.form["narrative"],
             "ioc": request.form.get("ioc", ""),
-            "status": "Unsolved",
+            "status": request.form.get("status", "Unsolved"),
+            "suspect_details": suspect_details_summary,
         }
 
         try:
@@ -639,12 +763,13 @@ def new_case():
                     complainant_contact, complainant_address,
                     incident_date, incident_location,
                     place_of_occurrence, barangay_number,
-                    station_concern, blotter_entry_no,
+                    station_concern_id, blotter_entry_no,
                     vehicle_type, vehicle_details,
                     narrative, status, ioc,
+                    suspect_details,
                     assigned_officer_id, created_by, complainant_id
                 ) VALUES (
-                    %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s
+                    %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s
                 )
                 """,
                 (
@@ -657,13 +782,14 @@ def new_case():
                     data["incident_location"],
                     data["place_of_occurrence"],
                     data["barangay_number"],
-                    data["station_concern"],
+                    data["station_concern_id"],
                     data["blotter_entry_no"],
                     data["vehicle_type"],
                     data["vehicle_details"],
                     data["narrative"],
                     data["status"],
                     data["ioc"],
+                    data["suspect_details"],
                     assigned_officer_id,
                     session["user_id"],
                     complainant_id,
@@ -771,10 +897,13 @@ def new_case():
                         "narrative": data["narrative"],
                         "status": data["status"],
                         "place_of_occurrence": data.get("place_of_occurrence", ""),
-                        "station_concern": data.get("station_concern", ""),
+                        "station_concern_id": data.get("station_concern_id"),
+                        "station_concern_name": data.get("station_concern_name"),
+                        "stationConcerned": data.get("station_concern_name"),
                         "blotter_entry_no": data.get("blotter_entry_no", ""),
                         "vehicle_type": data.get("vehicle_type", ""),
                         "ioc": data.get("ioc", ""),
+                        "suspect_details": data.get("suspect_details", ""),
                         "complainant_address": data.get("complainant_address", ""),
                         "assigned_officer_id": assigned_officer_id,
                         "created_by": session["user_id"],
@@ -825,7 +954,59 @@ def new_case():
             {"id": district_id, "name": district_data["name"], "barangays": barangays}
         )
 
-    return render_template("process_case.html", districts=districts_list)
+    # Get police stations for the station concerned dropdown
+    stations = []
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute(
+            """
+            SELECT id, station_number, station_name, location
+            FROM police_stations
+            ORDER BY station_number ASC
+            """
+        )
+        stations = [
+            {
+                "id": row[0],
+                "station_number": row[1],
+                "station_name": row[2],
+                "location": row[3],
+            }
+            for row in cur.fetchall()
+        ]
+        cur.close()
+    except Exception as e:
+        print("LOAD STATIONS ERROR:", e)
+
+    if not stations:
+        seed_default_police_stations()
+        try:
+            cur = mysql.connection.cursor()
+            cur.execute(
+                """
+                SELECT id, station_number, station_name, location
+                FROM police_stations
+                ORDER BY station_number ASC
+                """
+            )
+            stations = [
+                {
+                    "id": row[0],
+                    "station_number": row[1],
+                    "station_name": row[2],
+                    "location": row[3],
+                }
+                for row in cur.fetchall()
+            ]
+            cur.close()
+        except Exception as e:
+            print("LOAD STATIONS ERROR AFTER SEEDING:", e)
+
+    return render_template(
+        "process_case.html",
+        districts=districts_list,
+        stations=stations,
+    )
 
 
 @bp.route("/cases/edit/<reference_no>", methods=["GET", "POST"])
@@ -837,6 +1018,39 @@ def edit_case(reference_no):
 
     try:
         cur = mysql.connection.cursor()
+
+        # Police stations for dropdown
+        cur.execute("""
+            SELECT id, station_number, station_name, location
+            FROM police_stations
+            ORDER BY station_number ASC
+        """)
+        stations = [
+            {
+                "id": row[0],
+                "station_number": row[1],
+                "station_name": row[2],
+                "location": row[3],
+            }
+            for row in cur.fetchall()
+        ]
+
+        if not stations:
+            seed_default_police_stations()
+            cur.execute("""
+                SELECT id, station_number, station_name, location
+                FROM police_stations
+                ORDER BY station_number ASC
+            """)
+            stations = [
+                {
+                    "id": row[0],
+                    "station_number": row[1],
+                    "station_name": row[2],
+                    "location": row[3],
+                }
+                for row in cur.fetchall()
+            ]
 
         # Officers for dropdown
         cur.execute("""
@@ -856,7 +1070,7 @@ def edit_case(reference_no):
                 complainant_address,
                 incident_date, incident_location,
                 place_of_occurrence, barangay_number,
-                station_concern, blotter_entry_no,
+                station_concern_id, blotter_entry_no,
                 vehicle_type, vehicle_details,
                 narrative, status, assigned_officer_id,
                 ioc, suspect_details
@@ -887,7 +1101,7 @@ def edit_case(reference_no):
                 "incident_location": row[7],
                 "place_of_occurrence": row[8],
                 "barangay_number": row[9],
-                "station_concern": row[10],
+                "station_concern_id": row[10],
                 "blotter_entry_no": row[11],
                 "vehicle_type": row[12],
                 "vehicle_details": row[13],
@@ -909,6 +1123,14 @@ def edit_case(reference_no):
         try:
             new_status = request.form["status"]
             new_officer_id = request.form.get("assigned_officer_id") or None
+            new_station_concern_id = request.form.get("station_concern_id") or None
+            try:
+                new_station_concern_id = (
+                    int(new_station_concern_id) if new_station_concern_id else None
+                )
+            except ValueError:
+                new_station_concern_id = None
+
             old_status = case_data["status"]
 
             cur = mysql.connection.cursor()
@@ -916,13 +1138,25 @@ def edit_case(reference_no):
                 """
                 UPDATE cases SET
                     status=%s,
-                    assigned_officer_id=%s
+                    assigned_officer_id=%s,
+                    station_concern_id=%s
                 WHERE reference_no=%s
             """,
-                (new_status, new_officer_id, reference_no),
+                (new_status, new_officer_id, new_station_concern_id, reference_no),
             )
             mysql.connection.commit()
             cur.close()
+
+            station_concern_name = None
+            if new_station_concern_id:
+                station_concern_name = next(
+                    (
+                        s["station_name"]
+                        for s in stations
+                        if s["id"] == new_station_concern_id
+                    ),
+                    None,
+                )
 
             # Sync updated case to Firebase Firestore
             if firebase_ready():
@@ -934,6 +1168,9 @@ def edit_case(reference_no):
                     )
                 updated_fb_data["status"] = new_status
                 updated_fb_data["assigned_officer_id"] = new_officer_id
+                updated_fb_data["station_concern_id"] = new_station_concern_id
+                updated_fb_data["station_concern_name"] = station_concern_name
+                updated_fb_data["stationConcerned"] = station_concern_name
                 sync_case(case_data["id"], updated_fb_data, operation="update")
 
             if new_status != old_status:
@@ -961,7 +1198,7 @@ def edit_case(reference_no):
             print("EDIT CASE SAVE ERROR:", e)
             flash(f"Error updating case: {e}")
 
-    return render_template("edit_case.html", case=case_data, officers=officers)
+    return render_template("edit_case.html", case=case_data, officers=officers, stations=stations)
 
 
 # =========================
@@ -1205,11 +1442,11 @@ def toggle_user_status(user_id):
 
 
 # =========================
-# UC13 — Case Records (Admin)
+# UC13 — Case Records (Admin/Officer)
 # =========================
 @bp.route("/admin/cases")
 @login_required
-@role_required("admin")
+@role_required("admin", "officer")
 def case_records():
     """Admin: searchable, filterable, paginated view of ALL cases (UC13)."""
     search = request.args.get("search", "").strip()

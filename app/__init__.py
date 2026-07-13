@@ -71,11 +71,100 @@ def create_app():
             from .services.firebase_sync import (
                 init_firebase,
                 is_ready as firebase_ready,
+                sync_police_stations,
             )
 
             ok = init_firebase()
             if ok:
                 app.logger.info("✓ Firebase Firestore sync initialized")
+                try:
+                    cur = mysql.connection.cursor()
+                    cur.execute(
+                        """
+                        SELECT id, station_number, station_name, location
+                        FROM police_stations
+                        ORDER BY station_number ASC
+                        """
+                    )
+                    stations = [
+                        {
+                            "id": row[0],
+                            "stationNumber": row[1],
+                            "stationName": row[2],
+                            "location": row[3],
+                        }
+                        for row in cur.fetchall()
+                    ]
+                    cur.close()
+                    try:
+                        sync_result = sync_police_stations(stations)
+                        app.logger.info(
+                            f"Firebase police_stations sync: {sync_result['synced']} synced, {sync_result['failed']} failed"
+                        )
+                    except Exception as sync_error:
+                        app.logger.warning(f"Firebase police stations sync warning: {sync_error}")
+                except Exception as e:
+                    # If the police_stations table doesn't exist, create and seed it safely
+                    try:
+                        app.logger.info("police_stations missing — creating and seeding defaults")
+                        cur = mysql.connection.cursor()
+                        cur.execute(
+                            """
+                            CREATE TABLE IF NOT EXISTS police_stations (
+                                id INT AUTO_INCREMENT PRIMARY KEY,
+                                station_number INT NOT NULL UNIQUE,
+                                station_name VARCHAR(150) NOT NULL,
+                                location VARCHAR(255) NOT NULL,
+                                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                            )
+                            """
+                        )
+                        cur.execute(
+                            """
+                            INSERT IGNORE INTO police_stations (station_number, station_name, location) VALUES
+                            (1, 'Balut / Raxabago Police Station', 'Balut, Tondo'),
+                            (2, 'Moriones Police Station', 'Moriones, Tondo'),
+                            (3, 'Sta. Cruz Police Station', 'Sta. Cruz, Manila'),
+                            (4, 'Sampaloc Police Station', 'Sampaloc, Manila'),
+                            (5, 'Ermita Police Station', 'Ermita, Manila'),
+                            (6, 'Sta. Ana Police Station', 'Sta. Ana, Manila'),
+                            (7, 'Jose Abad Santos Police Station', 'Jose Abad Santos, Manila'),
+                            (8, 'Sta. Mesa Police Station', 'Sta. Mesa, Manila'),
+                            (9, 'Malate Police Station', 'Malate, Manila'),
+                            (10, 'Pandacan Police Station', 'Pandacan, Manila'),
+                            (11, 'Meisic Police Station', 'Meisic St., Binondo, Manila'),
+                            (12, 'Delpan Police Station', 'Delpan, Tondo, Manila'),
+                            (13, 'BASECO Police Station', 'BASECO, Port Area, Manila')
+                            """
+                        )
+                        mysql.connection.commit()
+                        # reload stations list
+                        cur.execute(
+                            """
+                            SELECT id, station_number, station_name, location
+                            FROM police_stations
+                            ORDER BY station_number ASC
+                            """
+                        )
+                        stations = [
+                            {
+                                "id": row[0],
+                                "stationNumber": row[1],
+                                "stationName": row[2],
+                                "location": row[3],
+                            }
+                            for row in cur.fetchall()
+                        ]
+                        cur.close()
+                        try:
+                            sync_result = sync_police_stations(stations)
+                            app.logger.info(
+                                f"Firebase police_stations sync: {sync_result['synced']} synced, {sync_result['failed']} failed"
+                            )
+                        except Exception as sync_error:
+                            app.logger.warning(f"Firebase police stations sync warning: {sync_error}")
+                    except Exception as exc:
+                        app.logger.warning(f"Failed to create/seed police_stations: {exc}")
             else:
                 app.logger.info(
                     "ℹ Firebase sync not active (disabled or credentials missing)"

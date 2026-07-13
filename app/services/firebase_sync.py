@@ -240,6 +240,16 @@ def sync_complainant(complainant_id: int, data: Dict[str, Any]) -> bool:
     return sync_to_firebase("complainants", str(complainant_id), data)
 
 
+def sync_police_station(station_id: int, data: Dict[str, Any], operation: str = "set") -> bool:
+    """Sync a police station reference entry."""
+    return sync_to_firebase("police_stations", str(station_id), data, operation)
+
+
+def sync_police_stations(stations: List[Dict[str, Any]]) -> Dict[str, int]:
+    """Batch-sync a list of police station records to Firebase."""
+    return batch_sync_collection("police_stations", stations, id_field="id")
+
+
 # --------------------------------------------------------------------------- #
 #  Batch / bulk sync (used on startup)                                         #
 # --------------------------------------------------------------------------- #

@@ -29,10 +29,36 @@ CREATE TABLE IF NOT EXISTS complainants (
 );
 
 -- ============================================================
--- TABLE 3: Cases
+-- TABLE 3: Police Stations (reference table)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS police_stations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    station_number INT NOT NULL UNIQUE,
+    station_name VARCHAR(150) NOT NULL,
+    location VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT IGNORE INTO police_stations (station_number, station_name, location) VALUES
+    (1, 'Balut / Raxabago Police Station', 'Balut, Tondo'),
+    (2, 'Moriones Police Station', 'Moriones, Tondo'),
+    (3, 'Sta. Cruz Police Station', 'Sta. Cruz, Manila'),
+    (4, 'Sampaloc Police Station', 'Sampaloc, Manila'),
+    (5, 'Ermita Police Station', 'Ermita, Manila'),
+    (6, 'Sta. Ana Police Station', 'Sta. Ana, Manila'),
+    (7, 'Jose Abad Santos Police Station', 'Jose Abad Santos, Manila'),
+    (8, 'Sta. Mesa Police Station', 'Sta. Mesa, Manila'),
+    (9, 'Malate Police Station', 'Malate, Manila'),
+    (10, 'Pandacan Police Station', 'Pandacan, Manila'),
+    (11, 'Meisic Police Station', 'Meisic St., Binondo, Manila'),
+    (12, 'Delpan Police Station', 'Delpan, Tondo, Manila'),
+    (13, 'BASECO Police Station', 'BASECO, Port Area, Manila');
+
+-- ============================================================
+-- TABLE 4: Cases
 -- Status: Unsolved / Solved / Cleared  (changed from Pending/Ongoing/Closed)
 -- New fields: blotter_entry_no, ioc (Investigator of Case), vehicle_type,
---             suspect_details, station_concern, place_of_occurrence,
+--             suspect_details, station_concern_id, place_of_occurrence,
 --             complainant_address
 -- ============================================================
 CREATE TABLE IF NOT EXISTS cases (
@@ -51,7 +77,7 @@ CREATE TABLE IF NOT EXISTS cases (
     incident_location VARCHAR(255),
     place_of_occurrence ENUM('Street','Residential','Commercial') DEFAULT NULL,
     barangay_number INT,
-    station_concern VARCHAR(150),
+    station_concern_id INT,
 
     -- Blotter reference
     blotter_entry_no VARCHAR(100),
@@ -79,11 +105,12 @@ CREATE TABLE IF NOT EXISTS cases (
 
     FOREIGN KEY (assigned_officer_id) REFERENCES users(id) ON DELETE SET NULL,
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (complainant_id) REFERENCES complainants(id) ON DELETE SET NULL
+    FOREIGN KEY (complainant_id) REFERENCES complainants(id) ON DELETE SET NULL,
+    FOREIGN KEY (station_concern_id) REFERENCES police_stations(id) ON DELETE SET NULL
 );
 
 -- ============================================================
--- TABLE 4: Suspects
+-- TABLE 5: Suspects
 -- Separate table for detailed suspect records per case
 -- ============================================================
 CREATE TABLE IF NOT EXISTS suspects (
@@ -146,8 +173,8 @@ CREATE TABLE IF NOT EXISTS hotspot (
 ALTER TABLE cases
     ADD COLUMN IF NOT EXISTS complainant_address VARCHAR(255) AFTER complainant_contact,
     ADD COLUMN IF NOT EXISTS place_of_occurrence ENUM('Street','Residential','Commercial') DEFAULT NULL AFTER incident_location,
-    ADD COLUMN IF NOT EXISTS station_concern VARCHAR(150) AFTER barangay_number,
-    ADD COLUMN IF NOT EXISTS blotter_entry_no VARCHAR(100) AFTER station_concern,
+    ADD COLUMN IF NOT EXISTS station_concern_id INT AFTER barangay_number,
+    ADD COLUMN IF NOT EXISTS blotter_entry_no VARCHAR(100) AFTER station_concern_id,
     ADD COLUMN IF NOT EXISTS vehicle_type ENUM('Motor','Vehicle') DEFAULT NULL AFTER blotter_entry_no,
     ADD COLUMN IF NOT EXISTS ioc VARCHAR(150) AFTER assigned_officer_id,
     ADD COLUMN IF NOT EXISTS suspect_details TEXT AFTER ioc;

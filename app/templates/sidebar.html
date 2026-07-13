@@ -1,0 +1,37 @@
+<aside class="sidebar">
+    <div class="sidebar-header">
+        <img src="{{ url_for('static', filename='images/pnpseal.png') }}" alt="PNP Logo" class="sidebar-logo">
+        <h2>Anti-Carnapping Unit - MPD</h2>
+        <p class="sidebar-subtitle">Carnapping Records Management and Processing</p>
+    </div>
+
+    <div class="user-box">
+        <strong>{{ session.get("full_name", "User") }}</strong>
+        {{ session.get("role", "guest")|capitalize }}
+    </div>
+
+    <ul class="sidebar-menu">
+        {% if session.get("role") == "admin" %}
+            <li><a href="{{ url_for('main.admin_dashboard') }}" class="{% if request.endpoint == 'main.admin_dashboard' %}active{% endif %}">Dashboard</a></li>
+        {% elif session.get("role") == "officer" %}
+            <li><a href="{{ url_for('main.officer_dashboard') }}" class="{% if request.endpoint == 'main.officer_dashboard' %}active{% endif %}">Dashboard</a></li>
+        {% endif %}
+
+        {% if session.get("role") == "admin" %}
+            <li><a href="{{ url_for('main.manage_users') }}" class="{% if request.endpoint == 'main.manage_users' %}active{% endif %}">Manage Users</a></li>
+        {% endif %}
+
+        <li><a href="{{ url_for('main.new_case') }}" class="{% if request.endpoint == 'main.new_case' %}active{% endif %}">Process Case</a></li>
+        <li><a href="{{ url_for('main.queue') }}" class="{% if request.endpoint == 'main.queue' %}active{% endif %}">Queue</a></li>
+        <li><a href="{{ url_for('main.case_records') }}" class="{% if request.endpoint == 'main.case_records' %}active{% endif %}">Case Records</a></li>
+        <li><a href="{{ url_for('main.reports') }}" class="{% if request.endpoint == 'main.reports' %}active{% endif %}">Reports</a></li>
+
+        {% if session.get("role") == "admin" %}
+            <li><a href="{{ url_for('main.activity_log') }}" class="{% if request.endpoint == 'main.activity_log' %}active{% endif %}">Activity Log</a></li>
+            <li><a href="{{ url_for('main.hotspots_map') }}" class="{% if request.endpoint == 'main.hotspots_map' %}active{% endif %}">🗺️ Hotspots Map</a></li>
+            <li><a href="{{ url_for('main.manage_backups') }}" class="{% if request.endpoint == 'main.manage_backups' %}active{% endif %}">💾 Database Backups</a></li>
+        {% endif %}
+
+        <li><a href="{{ url_for('main.logout') }}" class="logout-link">Logout</a></li>
+    </ul>
+</aside>
