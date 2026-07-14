@@ -56,6 +56,10 @@
                 <td>{{ case.incident_location }}</td>
             </tr>
             <tr>
+                <th>Investigator (IOC)</th>
+                <td>{{ case.ioc or '—' }}</td>
+            </tr>
+            <tr>
                 <th>Current Status</th>
                 <td><span style="background: #fff3cd; color: #856404; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; text-transform: uppercase;">{{ case.status }}</span></td>
             </tr>

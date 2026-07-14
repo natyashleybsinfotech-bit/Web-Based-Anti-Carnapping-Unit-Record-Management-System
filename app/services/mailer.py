@@ -75,6 +75,7 @@ _HTML_TEMPLATE = """\
         <tr><td>Incident Date</td><td>{incident_date}</td></tr>
         <tr><td>Incident Location</td><td>{incident_location}</td></tr>
         <tr><td>Vehicle</td><td>{vehicle_details}</td></tr>
+        <tr><td>Investigator (IOC)</td><td>{ioc}</td></tr>
         <tr><td>Status</td><td><strong>Unsolved</strong></td></tr>
       </table>
 
@@ -112,6 +113,7 @@ Complainant      : {complainant_name}
 Incident Date    : {incident_date}
 Incident Location: {incident_location}
 Vehicle          : {vehicle_details}
+Investigator (IOC): {ioc}
 Status           : Unsolved
 
 Track your case here: {track_url}
@@ -129,6 +131,7 @@ def send_reference_email(
     incident_date: str = "N/A",
     incident_location: str = "N/A",
     vehicle_details: str = "N/A",
+    ioc: str = "N/A",
 ) -> tuple[bool, str]:
     """
     Send a styled HTML receipt email to the complainant (FR3 / UC4).
@@ -155,6 +158,7 @@ def send_reference_email(
         "incident_date": incident_date or "N/A",
         "incident_location": incident_location or "N/A",
         "vehicle_details": vehicle_details or "N/A",
+        "ioc": ioc or "N/A",
     }
 
     try:

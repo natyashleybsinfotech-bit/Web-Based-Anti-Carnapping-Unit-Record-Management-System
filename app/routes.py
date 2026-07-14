@@ -853,7 +853,6 @@ def new_case():
             mysql.connection.commit()
             cur.close()
 
-            # Send HTML email receipt (FR3 / UC4)
             email_ok, email_msg = send_reference_email(
                 recipient=data["complainant_email"],
                 reference_no=data["reference_no"],
@@ -862,6 +861,7 @@ def new_case():
                 incident_date=str(data["incident_date"]),
                 incident_location=data["incident_location"],
                 vehicle_details=data.get("vehicle_details", "N/A"),
+                ioc=data.get("ioc", "N/A"),
             )
             if not email_ok:
                 flash(f"⚠ Email notice: {email_msg}")
@@ -1214,7 +1214,7 @@ def reference_slip(reference_no):
         cur = mysql.connection.cursor()
         cur.execute(
             """
-            SELECT reference_no, complainant_name, complainant_email, incident_location, status
+            SELECT reference_no, complainant_name, complainant_email, incident_location, status, ioc
             FROM cases
             WHERE reference_no=%s
         """,
@@ -1230,6 +1230,7 @@ def reference_slip(reference_no):
                 "complainant_email": row[2],
                 "incident_location": row[3],
                 "status": row[4],
+                "ioc": row[5],
             }
 
     except Exception as e:
@@ -1250,7 +1251,7 @@ def track_case(reference_no):
         cur = mysql.connection.cursor()
         cur.execute(
             """
-            SELECT reference_no, complainant_name, incident_location, status, created_at
+            SELECT reference_no, complainant_name, incident_location, status, created_at, ioc
             FROM cases
             WHERE reference_no=%s
         """,
