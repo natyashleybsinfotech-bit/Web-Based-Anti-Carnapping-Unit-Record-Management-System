@@ -228,6 +228,13 @@
         font-size: 16px;
         margin: 0;
     }
+
+    @media print {
+        .sidebar, .reports-header, .period-selector,
+        .export-section { display: none !important; }
+        .main { margin-left: 0 !important; }
+        .panel { box-shadow: none; border: none; }
+    }
 </style>
 
 <div class="reports-header">
@@ -377,7 +384,10 @@
     <button class="btn-export" onclick="downloadTableAsCSV('report-data.csv')">
         📥 Download as CSV
     </button>
-    <button class="btn-export" onclick="window.print()">
+    <button class="btn-export" onclick="downloadAsPDF()" style="background: linear-gradient(135deg,#dc3545 0%,#b02a37 100%); box-shadow: 0 2px 8px rgba(220,53,69,0.3);">
+        📄 Download as PDF
+    </button>
+    <button class="btn-export" onclick="window.print()" style="background: linear-gradient(135deg,#6c757d 0%,#495057 100%); box-shadow: 0 2px 8px rgba(108,117,125,0.3);">
         🖨️ Print Report
     </button>
 </div>
@@ -387,6 +397,8 @@
 <script type="application/json" id="report-values">{{ report_data | map(attribute=1) | list | tojson }}</script>
 <script type="application/json" id="report-period">{{ period | tojson }}</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script>
     var reportLabels = JSON.parse(document.getElementById('report-labels').textContent);
     var reportValues = JSON.parse(document.getElementById('report-values').textContent);
@@ -468,6 +480,61 @@
         downloadLink.setAttribute("href", URL.createObjectURL(csvFile));
         downloadLink.setAttribute("download", filename);
         downloadLink.click();
+    }
+
+    function downloadAsPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        // Title
+        doc.setFontSize(16);
+        doc.setTextColor(0, 61, 122);
+        doc.text('PNP Anti-Carnapping Unit', 14, 18);
+        doc.setFontSize(12);
+        doc.setTextColor(80, 80, 80);
+        var periodLabel = reportPeriod.charAt(0).toUpperCase() + reportPeriod.slice(1);
+        doc.text(periodLabel + ' Incident Report', 14, 26);
+        doc.setFontSize(10);
+        doc.text('Generated: ' + new Date().toLocaleDateString('en-PH', {year:'numeric',month:'long',day:'numeric'}), 14, 33);
+
+        // Summary stats
+        doc.setFontSize(11);
+        doc.setTextColor(0, 61, 122);
+        doc.text('Summary', 14, 44);
+        var totalCases = reportValues.reduce(function(a,b){ return a+b; }, 0);
+        var maxCases = Math.max.apply(null, reportValues);
+        var avgCases = reportValues.length > 0 ? (totalCases / reportValues.length).toFixed(1) : 0;
+        doc.setFontSize(10);
+        doc.setTextColor(50, 50, 50);
+        doc.text('Total Cases: ' + totalCases, 14, 52);
+        doc.text('Peak Period: ' + maxCases + ' cases', 80, 52);
+        doc.text('Average: ' + avgCases + ' per period', 150, 52);
+
+        // Table
+        var totalAll = reportValues.reduce(function(a,b){ return a+b; }, 0);
+        var tableBody = reportLabels.map(function(label, i) {
+            var count = reportValues[i];
+            var pct = totalAll > 0 ? ((count / totalAll) * 100).toFixed(1) + '%' : '0%';
+            return [label, count + ' cases', pct, count > 0 ? 'Active' : 'No Data'];
+        });
+
+        doc.autoTable({
+            startY: 60,
+            head: [[periodLabel, 'Total Cases', 'Percentage', 'Status']],
+            body: tableBody,
+            headStyles: { fillColor: [0, 61, 122], textColor: 255, fontStyle: 'bold' },
+            alternateRowStyles: { fillColor: [240, 244, 248] },
+            styles: { fontSize: 10, cellPadding: 4 },
+            columnStyles: { 0: { fontStyle: 'bold' } }
+        });
+
+        // Footer
+        var finalY = doc.lastAutoTable.finalY || 200;
+        doc.setFontSize(9);
+        doc.setTextColor(150, 150, 150);
+        doc.text('Manila Police District — Anti-Carnapping Unit Record Management System', 14, finalY + 12);
+
+        doc.save('carnapping-report-' + reportPeriod + '-' + new Date().toISOString().slice(0,10) + '.pdf');
     }
 </script>
 {% endblock %}

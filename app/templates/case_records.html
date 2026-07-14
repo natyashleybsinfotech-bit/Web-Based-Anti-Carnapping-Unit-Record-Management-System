@@ -241,17 +241,32 @@
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }
-  .status-badge.pending {
+  /* Current status values: Unsolved / Solved / Cleared */
+  .status-badge.unsolved {
     background: #fff3cd;
     color: #856404;
+    border: 1px solid #ffc107;
   }
-  .status-badge.ongoing {
+  .status-badge.solved {
     background: #cfe2ff;
     color: #084298;
+    border: 1px solid #6ea8fe;
   }
-  .status-badge.closed {
+  .status-badge.cleared {
     background: #d1e7dd;
     color: #0f5132;
+    border: 1px solid #75b798;
+  }
+  /* Legacy fallbacks */
+  .status-badge.pending  { background: #fff3cd; color: #856404; }
+  .status-badge.ongoing  { background: #cfe2ff; color: #084298; }
+  .status-badge.closed   { background: #d1e7dd; color: #0f5132; }
+
+  @media print {
+    .sidebar, .page-header, .filter-bar, .summary-bar,
+    .panel-head .btn-export, .pagination, .btn-pdf { display: none !important; }
+    .main { margin-left: 0 !important; }
+    .panel { box-shadow: none; border: none; }
   }
 
   .btn-sm {
@@ -357,17 +372,11 @@
     </div>
     <div class="filter-group">
       <label>Status</label>
-      <select name="status" id="statusFilter">
+      <select name="status" id="statusFilter" onchange="document.getElementById('filterForm').submit()">
         <option value="">All Statuses</option>
-        <option value="Unsolved" {% if status_filter == "Unsolved" %}selected{% endif %}>
-          ⏳ Unsolved
-        </option>
-        <option value="Solved" {% if status_filter == "Solved" %}selected{% endif %}>
-          🔍 Solved
-        </option>
-        <option value="Cleared" {% if status_filter == "Cleared" %}selected{% endif %}>
-          ✅ Cleared
-        </option>
+        <option value="Unsolved" {% if status_filter == "Unsolved" %}selected{% endif %}>⏳ Unsolved</option>
+        <option value="Solved"   {% if status_filter == "Solved"   %}selected{% endif %}>🔍 Solved</option>
+        <option value="Cleared"  {% if status_filter == "Cleared"  %}selected{% endif %}>✅ Cleared</option>
       </select>
     </div>
     <div class="filter-group">
@@ -398,7 +407,10 @@
 <div class="panel">
   <div class="panel-head">
     <h2>All Cases</h2>
-    <button class="btn-export" onclick="exportCSV()">📥 Export CSV</button>
+    <div style="display:flex; gap:8px;">
+      <button class="btn-export" onclick="exportCSV()">📥 Export CSV</button>
+      <button class="btn-export btn-pdf" onclick="window.print()" style="background: linear-gradient(135deg,#dc3545 0%,#b02a37 100%); box-shadow: 0 2px 8px rgba(220,53,69,0.3);">🖨️ Print / PDF</button>
+    </div>
   </div>
 
   {% if cases %}
@@ -431,9 +443,7 @@
           {{ case[4] or '—' }}
         </td>
         <td>
-          <span
-            class="status-badge {{ case[5].lower() if case[5] else 'pending' }}"
-          >
+          <span class="status-badge {{ case[5].lower() if case[5] else 'unsolved' }}">
             {{ case[5] or 'Unsolved' }}
           </span>
         </td>
