@@ -13,3 +13,4 @@ firebase-credentials.json
 app/static/qr/*
 app/static/exports/*
 **/__pycache__/
+ngrok.exe
