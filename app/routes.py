@@ -1466,13 +1466,9 @@ def case_records():
         params = []
 
         if search:
-            conditions.append(
-                "(reference_no LIKE %s OR complainant_name LIKE %s "
-                "OR vehicle_details LIKE %s OR incident_location LIKE %s "
-                "OR blotter_entry_no LIKE %s)"
-            )
+            conditions.append("blotter_entry_no LIKE %s")
             like = f"%{search}%"
-            params.extend([like, like, like, like, like])
+            params.append(like)
 
         if status_filter:
             conditions.append("status = %s")
