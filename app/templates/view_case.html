@@ -1,0 +1,176 @@
+{% extends "base_admin.html" %}
+{% block title %}Case Details{% endblock %}
+
+{% block content %}
+<style>
+    body { background-color: #f5f7fa; }
+    .page-header { background: linear-gradient(180deg, #003d7a 0%, #0052a3 100%); margin: 0 0 40px 0; padding: 45px 40px; border-bottom: 5px solid #0066cc; box-shadow: 0 4px 20px rgba(0, 61, 122, 0.15); display: flex; justify-content: center; align-items: center; text-align: center; min-height: 160px; }
+    .page-header h1 { color: white; margin: 0; font-size: 26px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    .panel { background: white; padding: 30px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0, 61, 122, 0.1); border-left: 6px solid #0066cc; margin-bottom: 30px; }
+    .panel-head { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 15px; margin-bottom: 25px; }
+    .panel-head h2 { margin: 0; color: #003d7a; font-size: 20px; font-weight: 700; text-transform: uppercase; }
+    
+    .details-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px; }
+    
+    .card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .card-title { font-size: 14px; font-weight: 700; color: #003d7a; text-transform: uppercase; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 15px; letter-spacing: 0.5px; }
+    
+    .info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f5f9; }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; }
+    .info-value { font-size: 13px; font-weight: 500; color: #1e293b; text-align: right; max-width: 60%; word-break: break-word; }
+    
+    .status-badge { display: inline-block; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+    .status-badge.unsolved { background: #fff3cd; color: #856404; border: 1px solid #ffc107; }
+    .status-badge.solved { background: #cfe2ff; color: #084298; border: 1px solid #6ea8fe; }
+    .status-badge.cleared { background: #d1e7dd; color: #0f5132; border: 1px solid #75b798; }
+
+    .narrative-box { background: #fafbfc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; font-size: 14px; color: #334155; line-height: 1.6; white-space: pre-line; min-height: 120px; }
+    
+    .btn-group { display: flex; gap: 10px; margin-top: 30px; }
+    .btn-back { background: #6c757d; color: white; padding: 12px 24px; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; text-decoration: none; text-transform: uppercase; font-size: 13px; }
+    .btn-edit { background: linear-gradient(135deg, #0066cc 0%, #0052a3 100%); color: white; padding: 12px 24px; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; text-decoration: none; text-transform: uppercase; font-size: 13px; box-shadow: 0 2px 8px rgba(0, 102, 204, 0.3); }
+    .btn-edit:hover { background: linear-gradient(135deg, #0052a3 0%, #003d7a 100%); transform: translateY(-1px); }
+
+    .suspect-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 15px; margin-bottom: 12px; }
+    .suspect-header { font-weight: 700; color: #003d7a; font-size: 14px; margin-bottom: 10px; text-transform: uppercase; border-bottom: 1px dashed #cbd5e1; padding-bottom: 6px; }
+</style>
+
+<div class="page-header">
+    <h1>📄 Case Information</h1>
+</div>
+
+<div class="panel">
+    <div class="panel-head">
+        <h2>Reference: {{ case.reference_no }}</h2>
+        <span class="status-badge {{ case.status.lower() }}">
+            {{ case.status }}
+        </span>
+    </div>
+    
+    <div class="details-grid">
+        <!-- Complainant Section -->
+        <div class="card">
+            <div class="card-title">Complainant Details</div>
+            <div class="info-row">
+                <span class="info-label">Full Name</span>
+                <span class="info-value"><strong>{{ case.complainant_name }}</strong></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Email</span>
+                <span class="info-value">{{ case.complainant_email or '—' }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Contact No.</span>
+                <span class="info-value">{{ case.complainant_contact or '—' }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Address</span>
+                <span class="info-value">{{ case.complainant_address or '—' }}</span>
+            </div>
+        </div>
+
+        <!-- Incident Section -->
+        <div class="card">
+            <div class="card-title">Incident Information</div>
+            <div class="info-row">
+                <span class="info-label">Date of Incident</span>
+                <span class="info-value">{{ case.incident_date or '—' }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Place Type</span>
+                <span class="info-value">{{ case.place_of_occurrence or '—' }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Specific Location</span>
+                <span class="info-value">{{ case.incident_location or '—' }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Barangay No.</span>
+                <span class="info-value">{% if case.barangay_number %}Brgy. {{ case.barangay_number }}{% else %}—{% endif %}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Station Concerned</span>
+                <span class="info-value">{{ case.station_name }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Blotter Entry No.</span>
+                <span class="info-value"><strong>{{ case.blotter_entry_no or '—' }}</strong></span>
+            </div>
+        </div>
+
+        <!-- Vehicle Specifications -->
+        <div class="card">
+            <div class="card-title">Vehicle Specifications</div>
+            <div class="info-row">
+                <span class="info-label">Vehicle Type</span>
+                <span class="info-value">{% if case.vehicle_type == 'Motor' %}Motorcycle{% elif case.vehicle_type == 'Vehicle' %}Vehicle / Car{% else %}—{% endif %}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Specifications</span>
+                <span class="info-value">{{ case.vehicle_details or '—' }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Investigator (IOC)</span>
+                <span class="info-value">{{ case.ioc or '—' }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Assigned Officer</span>
+                <span class="info-value">{{ case.officer_name or '—' }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Suspect Section -->
+    <div style="margin-bottom: 30px;">
+        <h3 style="font-size: 14px; font-weight: 700; color: #003d7a; text-transform: uppercase; margin-bottom: 15px; letter-spacing: 0.5px;">Suspect Details</h3>
+        {% if suspects %}
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px;">
+                {% for suspect in suspects %}
+                <div class="suspect-card">
+                    <div class="suspect-header">Suspect #{{ loop.index }}</div>
+                    <div class="info-row">
+                        <span class="info-label">Full Name</span>
+                        <span class="info-value"><strong>{{ suspect[0] or '—' }}</strong></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Alias</span>
+                        <span class="info-value">{{ suspect[1] or '—' }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Address</span>
+                        <span class="info-value">{{ suspect[2] or '—' }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Gang Affiliation</span>
+                        <span class="info-value">{{ suspect[3] or '—' }}</span>
+                    </div>
+                    <div class="info-row" style="border: none;">
+                        <span class="info-label">Additional Notes</span>
+                        <span class="info-value" style="text-align: left; max-width: 100%;">{{ suspect[4] or '—' }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="card" style="text-align: center; color: #94a3b8; padding: 20px;">
+                No suspects recorded for this case.
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Narrative Section -->
+    <div style="margin-bottom: 30px;">
+        <h3 style="font-size: 14px; font-weight: 700; color: #003d7a; text-transform: uppercase; margin-bottom: 15px; letter-spacing: 0.5px;">Incident Narrative</h3>
+        <div class="narrative-box">
+            {{ case.narrative }}
+        </div>
+    </div>
+
+    <div class="btn-group">
+        <a href="{{ url_for('main.case_records') }}" class="btn-back">« Back to Records</a>
+        <a href="{{ url_for('main.edit_case', reference_no=case.reference_no) }}" class="btn-edit">✏ Edit Case Status</a>
+    </div>
+</div>
+{% endblock %}

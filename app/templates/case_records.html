@@ -454,11 +454,19 @@
         </td>
         <td>{{ case[9] or '—' }}</td>
         <td>
-          <a
-            href="{{ url_for('main.edit_case', reference_no=case[1]) }}"
-            class="btn-sm btn-edit"
-            >Edit</a
-          >
+          <div style="display: flex; gap: 4px;">
+            <a
+              href="{{ url_for('main.view_case', reference_no=case[1]) }}"
+              class="btn-sm"
+              style="background: #0f172a; color: white; text-decoration: none;"
+              >View</a
+            >
+            <a
+              href="{{ url_for('main.edit_case', reference_no=case[1]) }}"
+              class="btn-sm btn-edit"
+              >Edit</a
+            >
+          </div>
         </td>
       </tr>
       {% endfor %}

@@ -1243,6 +1243,96 @@ def reference_slip(reference_no):
     return render_template("reference_slip.html", case=case_data)
 
 
+@bp.route("/cases/view/<reference_no>")
+@login_required
+@role_required("admin", "officer")
+def view_case(reference_no):
+    """View all details of a case in read-only mode."""
+    case_data = None
+    suspects = []
+
+    try:
+        cur = mysql.connection.cursor()
+
+        # Fetch case details
+        cur.execute(
+            """
+            SELECT
+                c.id, c.reference_no,
+                c.complainant_name, c.complainant_email, c.complainant_contact,
+                c.complainant_address,
+                c.incident_date, c.incident_location,
+                c.place_of_occurrence, c.barangay_number,
+                c.station_concern_id, c.blotter_entry_no,
+                c.vehicle_type, c.vehicle_details,
+                c.narrative, c.status,
+                u.full_name AS officer_name,
+                c.ioc, c.suspect_details,
+                ps.station_name, ps.station_number
+            FROM cases c
+            LEFT JOIN users u ON c.assigned_officer_id = u.id
+            LEFT JOIN police_stations ps ON c.station_concern_id = ps.id
+            WHERE c.reference_no=%s
+        """,
+            (reference_no,),
+        )
+        row = cur.fetchone()
+
+        if row:
+            incident_date_value = row[6]
+            if incident_date_value:
+                try:
+                    incident_date_value = incident_date_value.strftime("%Y-%m-%d")
+                except:
+                    incident_date_value = str(incident_date_value)
+
+            case_data = {
+                "id": row[0],
+                "reference_no": row[1],
+                "complainant_name": row[2],
+                "complainant_email": row[3],
+                "complainant_contact": row[4],
+                "complainant_address": row[5],
+                "incident_date": incident_date_value,
+                "incident_location": row[7],
+                "place_of_occurrence": row[8],
+                "barangay_number": row[9],
+                "station_concern_id": row[10],
+                "blotter_entry_no": row[11],
+                "vehicle_type": row[12],
+                "vehicle_details": row[13],
+                "narrative": row[14],
+                "status": row[15],
+                "officer_name": row[16],
+                "ioc": row[17],
+                "suspect_details_summary": row[18],
+                "station_name": f"{row[19]} — Station {row[20]}" if row[19] else "—"
+            }
+
+            # Fetch suspects details
+            cur.execute(
+                """
+                SELECT full_name, alias, address, gang_affiliation, other_details
+                FROM suspects
+                WHERE case_id=%s
+            """,
+                (case_data["id"],),
+            )
+            suspects = cur.fetchall()
+
+        cur.close()
+
+    except Exception as e:
+        print("VIEW CASE ERROR:", e)
+        flash(f"Error loading case details: {e}")
+
+    if not case_data:
+        flash("Case not found.")
+        return redirect(url_for("main.case_records"))
+
+    return render_template("view_case.html", case=case_data, suspects=suspects)
+
+
 @bp.route("/track/<reference_no>")
 def track_case(reference_no):
     case = None
